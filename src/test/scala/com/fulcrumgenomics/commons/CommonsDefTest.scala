@@ -30,6 +30,7 @@ import com.fulcrumgenomics.commons.CommonsDef._
 import com.fulcrumgenomics.commons.util.UnitSpec
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.ForkJoinTaskSupport
 
 /**
   * Tests for CommonsDef
@@ -124,5 +125,47 @@ class CommonsDefTest extends UnitSpec {
       resource.cleanedUp shouldBe false
       result.isFailure shouldBe true
     }
+  }
+
+  "forloop(Int,Int,Int)" should "work just like a regular single-index for loop" in {
+    val buffer = ListBuffer[Int]()
+    forloop (0, 10) { buffer += _ }
+    buffer.toList should contain theSameElementsInOrderAs Range(0, 10).toList
+
+    buffer.clear()
+    forloop (0, 10, by=2) { buffer += _ }
+    buffer.toList should contain theSameElementsInOrderAs Range(0, 10, step=2).toList
+
+    buffer.clear()
+    forloop (0, 10, by= -2) { buffer += _ }
+    buffer.toList should contain theSameElementsInOrderAs List.empty
+
+    buffer.clear()
+    forloop (10, 0, by= -2) { buffer += _ }
+    buffer.toList should contain theSameElementsInOrderAs List(10, 8, 6, 4, 2)
+  }
+
+  "forloop[T]" should "work like a regular for loop" in {
+    val buffer = ListBuffer[String]()
+    forloop ("A")(_.length < 6)(_ + "A") { buffer += _ }
+    buffer.toList should contain theSameElementsInOrderAs List("A", "AA", "AAA", "AAAA", "AAAAA")
+  }
+
+  "ParSupport" should "create a parallel collection with parallelism 2" in {
+    val xs = Seq(1, 2, 3, 4, 5).parWith(parallelism = 2)
+    xs.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool.getParallelism shouldBe 2
+    xs.map(_ * 2) shouldBe Seq(2, 4, 6, 8, 10)
+  }
+
+  it should "allow setting of parallelism and async mode" in {
+    val xs = Seq(1,2).parWith(parallelism=3, fifo=true)
+    val pool = xs.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool
+    pool.getParallelism shouldBe 3
+    pool.getAsyncMode shouldBe true
+
+    val ys = Seq(1,2).parWith(parallelism=5, fifo=false)
+    val pool2 = ys.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool
+    pool2.getParallelism shouldBe 5
+    pool2.getAsyncMode shouldBe false
   }
 }

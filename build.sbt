@@ -2,7 +2,6 @@ import com.typesafe.sbt.SbtGit.GitCommand
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyKeys.assembly
-import sbtassembly.MergeStrategy
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 import scoverage.ScoverageKeys._
 
@@ -85,9 +84,9 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("http://www.fulcrumgenomics.com")),
   homepage             := Some(url("http://github.com/fulcrumgenomics/commons")),
   startYear            := Some(2015),
-  scalaVersion         := "2.11.8",
-  crossScalaVersions   := Seq("2.11.8", "2.12.1"),
-  scalacOptions        += "-target:jvm-1.8",
+  scalaVersion         := "2.12.2",
+  crossScalaVersions   := Seq("2.11.11", "2.12.2"),
+  scalacOptions        ++= Seq("-target:jvm-1.8", "-deprecation", "-unchecked"),
   scalacOptions in (Compile, doc) ++= docScalacOptions,
   scalacOptions in (Test, doc) ++= docScalacOptions,
   autoAPIMappings := true,
@@ -108,6 +107,7 @@ lazy val assemblySettings = Seq(
   test in assembly     := {},
   logLevel in assembly := Level.Info
 )
+
 lazy val root = Project(id="commons", base=file("."))
   .settings(commonSettings: _*)
   .settings(unidocSettings: _*)
@@ -115,45 +115,8 @@ lazy val root = Project(id="commons", base=file("."))
   .settings(description := "Scala commons for Fulcrum Genomics.")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang"     %   "scala-reflect"     %  scalaVersion.value,
-
+      "org.scala-lang" %  "scala-reflect" %  scalaVersion.value,
       //---------- Test libraries -------------------//
-      "org.scalatest"             %% "scalatest"     % "3.0.1"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
+      "org.scalatest"  %% "scalatest"     % "3.0.1"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
   )
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-// Merge strategy for assembly
-////////////////////////////////////////////////////////////////////////////////////////////////
-val customMergeStrategy: String => MergeStrategy = {
-  case x if Assembly.isConfigFile(x) =>
-    MergeStrategy.concat
-  case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
-    MergeStrategy.rename
-  case PathList("META-INF", xs@_*) =>
-    xs map {
-      _.toLowerCase
-    } match {
-      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
-        MergeStrategy.discard
-      case ps@(x :: xt) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
-        MergeStrategy.discard
-      case "plexus" :: xt =>
-        MergeStrategy.discard
-      case "spring.tooling" :: xt =>
-        MergeStrategy.discard
-      case "com.google.guava" :: xt =>
-        MergeStrategy.discard
-      case "services" :: xt =>
-        MergeStrategy.filterDistinctLines
-      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
-        MergeStrategy.filterDistinctLines
-      case _ => MergeStrategy.deduplicate
-    }
-  case "asm-license.txt" | "overview.html" =>
-    MergeStrategy.discard
-  case "logback.xml" =>
-    MergeStrategy.first
-  case _ => MergeStrategy.deduplicate
-}
-assemblyMergeStrategy in assembly := customMergeStrategy
