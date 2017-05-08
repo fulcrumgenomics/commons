@@ -25,13 +25,13 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
-import java.util.concurrent.ForkJoinPool
 
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
 import scala.collection.Parallelizable
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterableLike, TaskSupport}
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
