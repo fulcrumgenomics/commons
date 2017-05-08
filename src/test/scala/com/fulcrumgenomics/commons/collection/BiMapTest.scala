@@ -22,7 +22,9 @@
  * THE SOFTWARE.
  */
 
-package com.fulcrumgenomics.commons.util
+package com.fulcrumgenomics.commons.collection
+
+import com.fulcrumgenomics.commons.util.UnitSpec
 
 class BiMapTest extends UnitSpec {
   "BiMap.add" should "remove remove any key or value that already exists" in {

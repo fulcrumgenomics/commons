@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package com.fulcrumgenomics.commons.util
+package com.fulcrumgenomics.commons.collection
 
 import scala.collection.mutable
 
