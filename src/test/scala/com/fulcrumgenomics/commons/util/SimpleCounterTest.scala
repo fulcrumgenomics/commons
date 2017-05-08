@@ -49,4 +49,13 @@ class SimpleCounterTest extends UnitSpec {
     counter.iterator.toList should contain theSameElementsAs List(("10.5", 4), (10, 5))
     counter.total shouldBe 9
   }
+
+  it should "create a new counter counting the provided objects" in {
+    val counter = SimpleCounter(Seq("foo", "bar", "splat", "foo", "whee"))
+    counter.countOf("foo")   shouldBe   2
+    counter.countOf("bar")   shouldBe   1
+    counter.countOf("splat") shouldBe 1
+    counter.countOf("whee")  shouldBe 1
+    counter.countOf("huh?")  shouldBe 0
+  }
 }

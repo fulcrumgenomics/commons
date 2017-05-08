@@ -27,6 +27,7 @@ package com.fulcrumgenomics.commons
 import java.io.{Closeable, IOException}
 
 import com.fulcrumgenomics.commons.CommonsDef._
+import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.UnitSpec
 
 import scala.collection.mutable.ListBuffer
@@ -167,5 +168,39 @@ class CommonsDefTest extends UnitSpec {
     val pool2 = ys.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool
     pool2.getParallelism shouldBe 5
     pool2.getAsyncMode shouldBe false
+  }
+
+  "CommonsDef implicits" should "create a better buffered iterator" in {
+    Seq(1,2,3).iterator.bufferBetter shouldBe an[BetterBufferedIterator[Int]]
+  }
+
+  it should "allow interconvert Java and Scala iterators" in {
+    def takesJava (iter: java.util.Iterator[String]) = iter.mkString
+    def takesScala(iter: scala.collection.Iterator[String]) = iter.mkString
+
+    takesScala(java.util.Arrays.asList("foo", "bar").iterator) shouldBe "foobar"
+    takesJava (Seq("bar", "foo").iterator) shouldBe "barfoo"
+  }
+
+  it should "convert a java Iterable to a scala iterator" in {
+    val xs = java.util.Arrays.asList("foo", "bar")
+    val ys = xs.map(x => x + x)
+    ys shouldBe an[Iterator[String]]
+    ys.mkString shouldBe "foofoobarbar"
+  }
+
+  it should "allow toJava* methods on scala iterators" in {
+    val xs = Seq(3,2,1,1)
+    val list = xs.iterator.toJavaList
+    val set  = xs.iterator.toJavaSet
+    val sset = xs.iterator.toJavaSortedSet
+
+    list shouldBe an[java.util.List[Int]]
+    set  shouldBe an[java.util.Set[Int]]
+    sset shouldBe an[java.util.SortedSet[Int]]
+
+    list should contain theSameElementsInOrderAs Seq(3,2,1,1)
+    set  should contain theSameElementsAs        Seq(3,2,1)
+    sset should contain theSameElementsInOrderAs Seq(1,2,3)
   }
 }

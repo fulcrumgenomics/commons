@@ -112,4 +112,14 @@ class NumericCounterTest extends UnitSpec {
     mean shouldBe counter.mean()
     stddev shouldBe counter.stddev(m=mean)
   }
+
+  it should "construct a counter that counts all the objects" in {
+    val counter = NumericCounter(Seq(1,2,2,3,3,3,4,4,4,4,5,5,5,5,5))
+    1 to 5 foreach { n => counter.countOf(n) shouldBe n }
+  }
+
+  it should "construct a counter that includes the given counts" in {
+    val counter = NumericCounter.from(Seq((1,2L),(2,4L),(3,6L),(4,8L),(5,10L)))
+    1 to 5 foreach { n => counter.countOf(n) shouldBe n*2 }
+  }
 }
