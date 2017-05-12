@@ -27,13 +27,16 @@ import java.io.{ByteArrayOutputStream, PrintStream}
 
 /** Methods to help capture stdin and stderr */
 trait CaptureSystemStreams {
+  type StdOutString = String
+  type StdErrString = String
+  type LoggerString = String
 
   /**
     * captures [[System.out]] while runnable is executing
     * @param runnable a code block to execute
     * @return everything written to [[System.out]] by runnable
     */
-  def captureStdout(runnable: () => Unit): String = {
+  def captureStdout(runnable: () => Unit): StdOutString = {
     captureSystemStream(runnable, System.out, (out: PrintStream) => System.setOut(out))
   }
 
@@ -42,9 +45,60 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[System.err]] by runnable
     */
-  def captureStderr(runnable: () => Unit): String = {
+  def captureStderr(runnable: () => Unit): StdErrString = {
     captureSystemStream(runnable, System.err, (out: PrintStream) => System.setErr(out))
   }
+
+  /**
+    * captures [[Logger.out]] while runnable is executing
+    * @param runnable a code block to execute
+    * @return everything written to [[Logger.out]] by runnable
+    */
+  def captureLogger(runnable: () => Unit): LoggerString = {
+    val out: ByteArrayOutputStream = new ByteArrayOutputStream
+    val previousOut = Logger.out
+    Logger.out = new PrintStream(out)
+    try {
+      runnable()
+    } finally {
+      Logger.out = previousOut
+    }
+    out.toString
+  }
+
+  /**
+    * captures both [[System.err]] and [[System.out]] while runnable is executing
+    * @param runnable a code block to execute
+    * @return everything written to [[System.err]] and [[System.out]] by runnable
+    */
+  def captureStreams(runnable: () => Unit): (StdErrString, StdOutString) = {
+    var stdout: String = ""
+    val stderr: String = captureStderr(() => {
+      stdout = captureStdout(() => {
+        runnable()
+      })
+    })
+    (stderr, stdout)
+  }
+
+  /**
+    * captures [[System.err]], [[System.out]], and [[Logger.out]] while runnable is executing
+    * @param runnable a code block to execute
+    * @return everything written to [[System.err]], [[System.out]], and [[Logger.out]]  by runnable
+    */
+  def captureItAll(runnable: () => Unit): (StdErrString, StdOutString, LoggerString) = {
+    var stdout: String = ""
+    var stderr: String = ""
+    val log = captureLogger(() => {
+      val (e, o) = captureStreams(() => {
+        runnable()
+      })
+      stderr = e
+      stdout = o
+    })
+    (stderr, stdout, log)
+  }
+
 
   private def captureSystemStream(runnable: () => Unit, stream: PrintStream, setterMethod: (PrintStream) => Unit): String = {
     val out: ByteArrayOutputStream = new ByteArrayOutputStream
