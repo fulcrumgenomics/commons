@@ -28,8 +28,8 @@ import java.io.Closeable
 import com.fulcrumgenomics.commons.CommonsDef._
 
 /**
-  * An Iterator that implements Closeable and auto-closes when it hits the end
-  * of iterator
+  * An Iterator that implements Closeable and auto-closes when it hits the end of
+  * the underlying iterator.
   */
 class SelfClosingIterator[A](iter: Iterator[A], private val closer: () => Unit) extends BetterBufferedIterator[A](iter) with Closeable {
   private var open = true
