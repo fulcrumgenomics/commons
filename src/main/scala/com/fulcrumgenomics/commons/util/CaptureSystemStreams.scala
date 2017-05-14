@@ -36,7 +36,7 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[System.out]] by runnable
     */
-  def captureStdout(runnable: () => Unit): StdOutString = {
+  def captureStdout(runnable: () => Unit): StdOutString = this.synchronized {
     captureSystemStream(runnable, System.out, (out: PrintStream) => System.setOut(out))
   }
 
@@ -45,7 +45,7 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[System.err]] by runnable
     */
-  def captureStderr(runnable: () => Unit): StdErrString = {
+  def captureStderr(runnable: () => Unit): StdErrString = this.synchronized {
     captureSystemStream(runnable, System.err, (out: PrintStream) => System.setErr(out))
   }
 
@@ -54,7 +54,7 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[Logger.out]] by runnable
     */
-  def captureLogger(runnable: () => Unit): LoggerString = {
+  def captureLogger(runnable: () => Unit): LoggerString = this.synchronized {
     val out: ByteArrayOutputStream = new ByteArrayOutputStream
     val previousOut = Logger.out
     Logger.out = new PrintStream(out)
@@ -71,7 +71,7 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[System.err]] and [[System.out]] by runnable
     */
-  def captureStreams(runnable: () => Unit): (StdErrString, StdOutString) = {
+  def captureStreams(runnable: () => Unit): (StdErrString, StdOutString) = this.synchronized {
     var stdout: String = ""
     val stderr: String = captureStderr(() => {
       stdout = captureStdout(() => {
@@ -86,7 +86,7 @@ trait CaptureSystemStreams {
     * @param runnable a code block to execute
     * @return everything written to [[System.err]], [[System.out]], and [[Logger.out]]  by runnable
     */
-  def captureItAll(runnable: () => Unit): (StdErrString, StdOutString, LoggerString) = {
+  def captureItAll(runnable: () => Unit): (StdErrString, StdOutString, LoggerString) = this.synchronized {
     var stdout: String = ""
     var stderr: String = ""
     val log = captureLogger(() => {
