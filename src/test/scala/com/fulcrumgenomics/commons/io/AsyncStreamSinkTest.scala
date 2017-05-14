@@ -40,7 +40,7 @@ class AsyncStreamSinkTest extends UnitSpec {
 
     val proc = new ProcessBuilder("cat", file.toString).start()
     val actual = mutable.ListBuffer[String]()
-    val sink = new AsyncStreamSink(proc.getInputStream, s => actual.append(s))
+    val sink = new AsyncStreamSink(proc.getInputStream, s => actual.append(s)).setName("my sink")
     val exit = proc.waitFor()
     sink.close(1000)
 
