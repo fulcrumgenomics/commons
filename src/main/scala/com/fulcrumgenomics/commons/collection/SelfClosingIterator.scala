@@ -42,6 +42,7 @@ class SelfClosingIterator[A](iter: Iterator[A], private val closer: () => Unit) 
     * then the close() method is invoked.
     */
   override def next(): A = {
+    if (!open) throw new IllegalStateException("next() called on a closed iterator.")
     val result = super.next()
     if (!hasNext) close()
     result
@@ -49,7 +50,7 @@ class SelfClosingIterator[A](iter: Iterator[A], private val closer: () => Unit) 
 
   /** Invokes the closer function provided in the constructor. */
   override def close(): Unit = if (open) {
-    open = true
+    open = false
     this.closer()
   }
 }

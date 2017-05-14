@@ -27,4 +27,22 @@ class SelfClosingIteratorTest extends UnitSpec {
     iter.foreach { x => fail("Should not do anything on an empty iterator!") }
     closed shouldBe true
   }
+
+  it should "handle iterators that don't like being closed twice" in {
+    var closings = 0
+    val iter = new SelfClosingIterator(Seq(1,2,3).iterator, () => { closings += 1; if (closings > 1) fail("Too many!")})
+    val total = iter.sum
+    iter.close()
+    iter.close()
+    closings shouldBe 1
+  }
+
+  it should "treat closed iterators as exhausted iterators even if there could be more" in {
+    var closed = false
+    val iter = new SelfClosingIterator(Seq(1,2,3).iterator, () => closed = true)
+    iter.next() shouldBe 1
+    iter.close()
+    iter.hasNext shouldBe false
+    an[Exception] shouldBe thrownBy { iter.next() }
+  }
 }
