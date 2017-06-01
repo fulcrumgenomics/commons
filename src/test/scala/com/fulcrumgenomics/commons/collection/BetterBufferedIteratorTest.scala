@@ -16,4 +16,14 @@ class BetterBufferedIteratorTest extends UnitSpec {
     ys.dropWhile(_ <= 8)
     ys.takeWhile(_ => true).toSeq shouldBe Seq(9)
   }
+
+  it should "have a headOption method" in {
+    val list = List(1)
+    val xs = list.iterator.bufferBetter
+
+    xs.headOption shouldBe Some(1)
+    xs.next() shouldBe 1
+    xs.headOption shouldBe None
+    xs.isEmpty shouldBe true
+  }
 }

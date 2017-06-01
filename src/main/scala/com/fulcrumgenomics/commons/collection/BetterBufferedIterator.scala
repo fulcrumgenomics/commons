@@ -26,11 +26,17 @@ package com.fulcrumgenomics.commons.collection
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
+/** A little trait to allow BetterBufferedIterator to override the headOption method. The latter method
+  * is not found in [[BetterBufferedIterator]] in 2.11.11, but in 2.12.2! */
+sealed trait HeadOption[A] {
+  def headOption: Option[A]
+}
+
 /**
   * A better buffered iterator that provides implementations of takeWhile and dropWhile
   * that don't discard extra values.
   */
-class BetterBufferedIterator[A](private val iterator: Iterator[A]) extends BufferedIterator[A] {
+class BetterBufferedIterator[A](private val iterator: Iterator[A]) extends HeadOption[A] with BufferedIterator[A] {
   private var buffer: Option[A] = maybeNext
 
   /** Returns a Some(A) if there is a next in the iterator else None. */
@@ -61,4 +67,10 @@ class BetterBufferedIterator[A](private val iterator: Iterator[A]) extends Buffe
     while (hasNext && p(head)) next()
     this
   }
+
+  /** Returns an option of the next element of an iterator without advancing beyond it.
+    * @return  the next element of this iterator if it has a next element
+    *           `None` if it does not
+    */
+  override def headOption: Option[A] = if (hasNext) Some(head) else None
 }
