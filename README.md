@@ -10,4 +10,4 @@
 Scala Commons
 ====
 
-The latest API documentation can be found on [here](http://javadoc.io/doc/com.fulcrumgenomics/commons_2.12).
+The latest API documentation can be found [here](http://javadoc.io/doc/com.fulcrumgenomics/commons_2.12).
