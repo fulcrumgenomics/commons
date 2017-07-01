@@ -173,7 +173,8 @@ trait IoUtil {
     writer.close()
   }
 
-  /** Reads the path provides and produces an iterator of lines of text from the file. */
+  /** Reads the path provides and produces an iterator of lines of text from the file. The underlying file handle
+    * will not be closed until the end of the iterator is reached. */
   def readLines(path: Path): Iterator[String] = toSource(path).getLines()
 
   /** Creates an object that will asynchronously read character data from a stream and pipe it into a sink function. */
