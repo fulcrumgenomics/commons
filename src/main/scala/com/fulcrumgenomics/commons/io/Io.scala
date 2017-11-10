@@ -37,9 +37,9 @@ object Io extends IoUtil
  * Trait that can be mixed in to make an Io utility object, and can be re-used elsewhere.
  */
 trait IoUtil {
-  val StdIn   = PathUtil.pathTo("/dev/stdin")
-  val StdOut  = PathUtil.pathTo("/dev/stdout")
-  val DevNull = PathUtil.pathTo("/dev/null")
+  val StdIn: Path = PathUtil.pathTo("/dev/stdin")
+  val StdOut: Path = PathUtil.pathTo("/dev/stdout")
+  val DevNull: Path = PathUtil.pathTo("/dev/null")
 
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
@@ -167,7 +167,7 @@ trait IoUtil {
   }
 
   /** Writes one or more lines to a file represented by a path. */
-  def writeLines(path: Path, lines: Seq[String]) = {
+  def writeLines(path: Path, lines: Seq[String]): Unit = {
     val writer = toWriter(path)
     lines.foreach(line => writer.append(line).append('\n'))
     writer.close()
@@ -179,4 +179,12 @@ trait IoUtil {
 
   /** Creates an object that will asynchronously read character data from a stream and pipe it into a sink function. */
   def pipeStream(stream: InputStream, sink: String => Unit) : AsyncStreamSink = new AsyncStreamSink(stream, sink)
+
+  /** Finds a resource with a given name on the classpath and produces an iterator of lines of text from the resource. */
+  def readLinesFromResource(name: String): Iterator[String] = {
+    val in = getClass.getResourceAsStream(name)
+    require(in != null, s"Resource does not exist at path: $name")
+    val stream = new BufferedInputStream(in, bufferSize)
+    Source.fromInputStream(stream).withClose(() => stream.close()).getLines
+  }
 }
