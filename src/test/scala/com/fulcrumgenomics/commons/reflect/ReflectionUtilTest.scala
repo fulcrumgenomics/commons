@@ -34,6 +34,7 @@ import scala.annotation.ClassfileAnnotation
 import scala.reflect.runtime.{universe => ru}
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
+import scala.util.Success
 
 object ReflectionUtilTest {
   case class IntNoDefault(var v: Int)
@@ -323,6 +324,18 @@ class ReflectionUtilTest extends UnitSpec {
 
   it should "not be able to construct a non-collection if given multiple values" in {
     an[Exception] should be thrownBy ReflectionUtil.typedValueFromString(classOf[Int], classOf[Int], "1", "2", "3").get
+  }
+
+  Seq("Y", "y", "Yes", "YES", "yes", "true", "tRUE", "TRUE", "t", "T").foreach { truth =>
+      it should s"parse $truth as true for a boolean value" in {
+        ReflectionUtil.constructFromString(classOf[Boolean], classOf[Boolean], truth) shouldBe Success(true)
+      }
+  }
+
+  Seq("yup", "nope", "no", "false", "truthy", "True Dat").foreach { falsehood  =>
+      it should s"parse $falsehood as false for a boolean value" in {
+        ReflectionUtil.constructFromString(classOf[Boolean], classOf[Boolean], falsehood) shouldBe Success(false)
+      }
   }
 
   "ReflectionUtil.enumOptions" should "return the options for an enum" in {
