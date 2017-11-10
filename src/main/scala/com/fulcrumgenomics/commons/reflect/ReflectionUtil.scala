@@ -52,6 +52,9 @@ object ReflectionUtil {
 
   val SpecialEmptyOrNoneToken = ":none:"
 
+  /** Lower case version of strings that should be considered true when parsing a boolean. */
+  val StringsThatAreTrue = IndexedSeq("true", "yes", "t", "y")
+
   /** A cache of Type objects to their Class objects. */
   private val typeToClassCache = mutable.HashMap[Type, Class[_]]()
 
@@ -372,6 +375,9 @@ object ReflectionUtil {
     }
     else if (clazz == classOf[Path]) {
       PathUtil.pathTo(value)
+    }
+    else if (clazz == classOf[java.lang.Boolean]) {
+      StringsThatAreTrue.contains(value.toLowerCase)
     }
     else if (clazz == classOf[Option[_]]) {
       // unitType shouldn't be an option, since it's supposed to the type *inside* any containers
