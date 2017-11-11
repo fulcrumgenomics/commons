@@ -23,7 +23,7 @@
  */
 package com.fulcrumgenomics.commons.io
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, Paths}
 
 import com.fulcrumgenomics.commons.util.UnitSpec
 
@@ -162,5 +162,17 @@ class IoTest extends UnitSpec {
     Files.delete(path)
 
     roundtripped shouldBe lines
+  }
+
+  "Io.readLinesFromResource" should "read lines from a resource" in {
+    val actual = Io.readLinesFromResource("/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt").toList
+    val file = Paths.get("src/test/resources/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt")
+    val expected = Io.toSource(file).getLines().toList
+
+    actual shouldBe expected
+  }
+
+  it should "fail when the resource does not exist" in {
+    an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
   }
 }
