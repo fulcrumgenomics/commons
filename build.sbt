@@ -115,7 +115,8 @@ lazy val root = Project(id="commons", base=file("."))
   .settings(description := "Scala commons for Fulcrum Genomics.")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang" %  "scala-reflect" %  scalaVersion.value,
+      "com.typesafe"   %  "config"        % "1.3.2",
+      "org.scala-lang" %  "scala-reflect" % scalaVersion.value,
       //---------- Test libraries -------------------//
       "org.scalatest"  %% "scalatest"     % "3.0.1"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
