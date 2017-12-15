@@ -152,6 +152,26 @@ class CommonsDefTest extends UnitSpec {
     buffer.toList should contain theSameElementsInOrderAs List("A", "AA", "AAA", "AAAA", "AAAAA")
   }
 
+  "sumBy[B]" should "sum a non-empty sequence of values" in {
+    val traversable     = Traversable("1", "2", "3")
+    val iterator        = Iterator("1", "2", "3")
+    val list            = List("1", "2", "3")
+
+    traversable.sumBy(_.toInt) shouldBe 6
+    iterator.sumBy(_.toInt) shouldBe 6
+    list.sumBy(_.toInt) shouldBe 6
+  }
+
+  "sumBy[B]" should "sum an empty sequence" in {
+    val traversable     = Traversable.empty[String]
+    val iterator        = Iterator[String]()
+    val list            = List.empty[String]
+
+    traversable.sumBy(_.toInt) shouldBe 0
+    iterator.sumBy(_.toInt) shouldBe 0
+    list.sumBy(_.toInt) shouldBe 0
+  }
+
   "ParSupport" should "create a parallel collection with parallelism 2" in {
     val xs = Seq(1, 2, 3, 4, 5).parWith(parallelism = 2)
     xs.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool.getParallelism shouldBe 2
