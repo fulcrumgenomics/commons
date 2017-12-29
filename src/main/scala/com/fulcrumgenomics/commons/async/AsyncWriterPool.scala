@@ -128,7 +128,7 @@ class AsyncWriterPool(threads: Int) extends Closeable {
 
   /** A runnable that attempts to drain items from all queues to their writers. */
   private class Drainer extends Runnable {
-    override def run(): Unit = try {
+    override def run(): Unit = {
       while (!poolClosed.get()) {
         writers.foreach { writer =>
           try {
