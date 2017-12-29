@@ -25,7 +25,6 @@
 package com.fulcrumgenomics.commons
 
 import java.io.{Closeable, IOException}
-import java.text.{DecimalFormat, NumberFormat}
 
 import com.fulcrumgenomics.commons.CommonsDef._
 import com.fulcrumgenomics.commons.CommonsDef.MaxNBy

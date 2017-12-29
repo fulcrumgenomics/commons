@@ -1,5 +1,4 @@
 import com.typesafe.sbt.SbtGit.GitCommand
-import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyKeys.assembly
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
