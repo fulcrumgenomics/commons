@@ -233,6 +233,24 @@ class CommonsDef {
   }
 
   /**
+    * Implicit that provides additional methods to sum the values of a sequence after applying a mapping to the items.
+    * This has the benefit of not creating any intermediate collections or iterators.   The mapping must map to a
+    * [[Numeric]] type.
+    * @param sequence the sequence of items to transform and sum.
+    * @tparam A the type of items to transform.
+    */
+  implicit class SumBy[A](sequence: TraversableOnce[A]) {
+    /**
+      * Applies the given transform to the items in sequence, and then sums them.
+      * @param f the transform to map items from type [[A]] to type [[B]].
+      * @param x the numeric type of [[B]].
+      * @tparam B the type of the items after the transform has been applied; must be a [[Numeric]] type.
+      * @return
+      */
+    def sumBy[B](f: A => B)(implicit x: Numeric[B]): B = sequence.foldLeft(x.zero) { case (left, right) => x.plus(left, f(right)) }
+  }
+
+  /**
     * Implicit that provides additional methods to any collection that is Parallelizable.
     * Introduces [[parWith()]] methods that create parallel versions of the collection
     * with various configuration options.
