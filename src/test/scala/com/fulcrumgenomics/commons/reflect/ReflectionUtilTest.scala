@@ -290,6 +290,11 @@ class ReflectionUtilTest extends UnitSpec {
     ReflectionUtil.constructFromString(classOf[Seq[_]], classOf[String], "A", "B", ReflectionUtil.SpecialEmptyOrNoneToken, "C").get shouldBe List("A", "B", ReflectionUtil.SpecialEmptyOrNoneToken, "C")
   }
 
+  it should "construct a Char value from a non-empty String" in {
+    ReflectionUtil.constructFromString(classOf[Char], classOf[Char], "X").get shouldBe 'X'
+    ReflectionUtil.constructFromString(java.lang.Character.TYPE, java.lang.Character.TYPE, "X").get shouldBe 'X'
+  }
+
   class NoStringCtor(v: Int)
   it should "not be able to construct from string for a class with no string ctor" in {
     an[Exception] should be thrownBy ReflectionUtil.constructFromString(classOf[NoStringCtor], classOf[NoStringCtor], "v").get

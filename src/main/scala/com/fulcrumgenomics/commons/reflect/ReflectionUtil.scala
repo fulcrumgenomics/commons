@@ -125,20 +125,22 @@ object ReflectionUtil {
 
   /** Ensures that the wrapper class is used for primitive classes. */
   def ifPrimitiveThenWrapper(typ: Class[_]): Class[_] = typ match {
-    case _ if typ eq Byte.getClass          => classOf[java.lang.Byte]
-    case _ if typ eq Short.getClass         => classOf[java.lang.Short]
-    case _ if typ eq Int.getClass           => classOf[java.lang.Integer]
-    case _ if typ eq Long.getClass          => classOf[java.lang.Long]
-    case _ if typ eq Float.getClass         => classOf[java.lang.Float]
-    case _ if typ eq Double.getClass        => classOf[java.lang.Double]
-    case _ if typ eq Boolean.getClass       => classOf[java.lang.Boolean]
-    case _ if typ eq java.lang.Byte.TYPE    => classOf[java.lang.Byte]
-    case _ if typ eq java.lang.Short.TYPE   => classOf[java.lang.Short]
-    case _ if typ eq java.lang.Integer.TYPE => classOf[java.lang.Integer]
-    case _ if typ eq java.lang.Long.TYPE    => classOf[java.lang.Long]
-    case _ if typ eq java.lang.Float.TYPE   => classOf[java.lang.Float]
-    case _ if typ eq java.lang.Double.TYPE  => classOf[java.lang.Double]
-    case _ if typ eq java.lang.Boolean.TYPE => classOf[java.lang.Boolean]
+    case _ if typ eq Byte.getClass            => classOf[java.lang.Byte]
+    case _ if typ eq Char.getClass            => classOf[java.lang.Character]
+    case _ if typ eq Short.getClass           => classOf[java.lang.Short]
+    case _ if typ eq Int.getClass             => classOf[java.lang.Integer]
+    case _ if typ eq Long.getClass            => classOf[java.lang.Long]
+    case _ if typ eq Float.getClass           => classOf[java.lang.Float]
+    case _ if typ eq Double.getClass          => classOf[java.lang.Double]
+    case _ if typ eq Boolean.getClass         => classOf[java.lang.Boolean]
+    case _ if typ eq java.lang.Byte.TYPE      => classOf[java.lang.Byte]
+    case _ if typ eq java.lang.Character.TYPE => classOf[java.lang.Character]
+    case _ if typ eq java.lang.Short.TYPE     => classOf[java.lang.Short]
+    case _ if typ eq java.lang.Integer.TYPE   => classOf[java.lang.Integer]
+    case _ if typ eq java.lang.Long.TYPE      => classOf[java.lang.Long]
+    case _ if typ eq java.lang.Float.TYPE     => classOf[java.lang.Float]
+    case _ if typ eq java.lang.Double.TYPE    => classOf[java.lang.Double]
+    case _ if typ eq java.lang.Boolean.TYPE   => classOf[java.lang.Boolean]
     case _ => typ
   }
 
@@ -375,6 +377,9 @@ object ReflectionUtil {
     }
     else if (clazz == classOf[Path]) {
       PathUtil.pathTo(value)
+    }
+    else if (clazz == classOf[java.lang.Character]) {
+      if (value.length == 0) 0.toChar else value.charAt(0)
     }
     else if (clazz == classOf[java.lang.Boolean]) {
       StringsThatAreTrue.contains(value.toLowerCase)
