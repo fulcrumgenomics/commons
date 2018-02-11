@@ -379,7 +379,8 @@ object ReflectionUtil {
       PathUtil.pathTo(value)
     }
     else if (clazz == classOf[java.lang.Character]) {
-      if (value.length == 0) 0.toChar else value.charAt(0)
+      if (value.length == 1) value.charAt(0)
+      else throw new IllegalArgumentException(s"Cannot create character from multi-character string: $value")
     }
     else if (clazz == classOf[java.lang.Boolean]) {
       StringsThatAreTrue.contains(value.toLowerCase)
