@@ -32,7 +32,7 @@ import com.fulcrumgenomics.commons.io.PathUtil.pathTo
 import com.fulcrumgenomics.commons.reflect.ReflectionUtil
 import com.typesafe.config.{Config, ConfigFactory, ConfigParseOptions}
 
-import scala.collection.SortedSet
+import scala.collection.{SortedSet, mutable}
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.util.{Failure, Success}
 
@@ -96,52 +96,25 @@ trait ConfigurationLike {
   /** The configuration to query. */
   protected def config : Config
 
-  /** A logger to which to report exceptions. */
-  protected def _logger: Option[Logger] = None
-
-  /** The keys requested, in order. */
-  private val _requestedKeys = new java.util.concurrent.ConcurrentSkipListSet[String]()
+  /** Method that can be overridden to receive a call each time a configuration path is requested. */
+  protected def keyRequested(path: String): Unit = Unit
 
   /**
-    * Looks up a single value of a specific type in configuration. If the configuration key
-    * does not exist, an exception is thrown. If the requested type is not supported, an
-    * exception is thrown.
+    * Method to allow subclasses to override how errors are handled, e.g. by logging or throwing
+    * different exceptions.
     */
-  def configure[T : TypeTag](path: String) : T = {
-    this._requestedKeys.add(path)
-    try {
-      asType[T](path)
-    }
-    catch {
-      case ex : Exception =>
-        this._logger.foreach(_.exception(ex))
-        throw new IllegalArgumentException(s"Exception retrieving configuration key '$path': ${ex.getMessage}", ex)
-    }
+  protected def handle(message: => String, throwable: Option[Throwable] = None): Nothing = throwable match {
+    case Some(thr) => throw new IllegalArgumentException(message, thr)
+    case None      => throw new IllegalArgumentException(message)
   }
 
   /**
-    * Looks up a single value of a specific type in configuration. If the configuration key
-    * does not exist, returns the default value provided. If the requested type is not supported, an
-    * exception is thrown.
+    * Method to fetch a configuration key that may or may not be present.
     */
-  def configure[T : TypeTag](path: String, defaultValue: T) : T = {
-    this._requestedKeys.add(path)
-    if (config.hasPath(path)) configure[T](path)
-    else defaultValue
+  protected def fetch[T : TypeTag](path: String): Option[T] = {
+    keyRequested(path)
+    if (config.hasPath(path)) Some(asType[T](path)) else None
   }
-
-  /**
-    * Optionally accesses a configuration value. If the value is not present in the configuration
-    * a None will be returned, else a Some(T) of the appropriate type.
-    */
-  def optionallyConfigure[T : TypeTag](path: String) : Option[T] = {
-    this._requestedKeys.add(path)
-    if (config.hasPath(path)) Some(configure[T](path))
-    else None
-  }
-
-  /** Returns a sorted set of all keys that have been requested up to this point in time. */
-  def requestedKeys: SortedSet[String] = collection.immutable.TreeSet[String](requestedKeys.toSeq:_*)
 
   /** Converts the configuration path to the given type. If the requested type is not supported, an
     * exception is thrown.  Override this method to support custom types.
@@ -174,32 +147,52 @@ trait ConfigurationLike {
 
         ReflectionUtil.constructFromString(paramClass, paramUnitClass, values:_*) match {
           case Success(obj) => obj.asInstanceOf[T]
-          case Failure(thr) =>
-            this._logger.foreach(_.exception(thr))
-            throw new IllegalArgumentException("Don't know how to configure a " + typeOf[T] + ". " + thr.getMessage)
+          case Failure(thr) => handle("Don't know how to configure a " + typeOf[T] + ". ", Some(thr))
         }
     }
   }
 }
 
+/** Companion object to [[Configuration]]. */
+object Configuration {
+  /** Generates a default Configuration object. */
+  def apply(): Configuration = new Configuration(ConfigFactory.load())
+
+  /** Generates a default Configuration object. */
+  def apply(path: Path): Configuration = {
+      // setAllowMissing(false) refers to allowing the file(!) to be missing, not values within the file
+      val options = ConfigParseOptions.defaults().setAllowMissing(false)
+      val localConfig = ConfigFactory.parseFile(path.toFile, options)
+
+      // This mimics the behaviour of ConfigFactory.load() but with the localConfig sandwiched in
+      val config = ConfigFactory.defaultOverrides()
+        .withFallback(localConfig)
+        .withFallback(ConfigFactory.defaultApplication())
+        .withFallback(ConfigFactory.defaultReference())
+        .resolve()
+
+    new Configuration(config)
+  }
+}
+
 /**
-  * Trait that provides useful methods for resolving all kinds of things in configuration.  Uses
+  * Class that provides useful methods for resolving all kinds of things in configuration.  Uses
   * [[Config]] to retrieve configuration values in a type-safe way.  Adds an additional method to
   *
   * Allows the for the initialize of the configuration from a specified path, with fallbacks to system properties,
   * application.conf and reference.conf files.
   *
-  * @example A common pattern is to create an `object` that extends this trait, and reference that object when retrieving
+  * @example A common pattern is to create an `object` that extends this class, and reference that object when retrieving
   *          values from a path.
   * {{{
   *   scala> import com.fulcrumgenomics.commons.util.Configuration
   *   scala> import com.typesafe.config.{Config, ConfigFactory}
-  *   scala> object CustomConfiguration extends Configuration
+  *   scala> object CustomConfiguration extends Configuration(ConfigFactory.load())
   *   scala> CustomConfiguration.get[Long]("path.does-not-exist")
   *   res0: Option[Long] = None
   * }}}
   *
-  * @example A common pattern is to create an `object` that extends this trait, and reference that object when retrieving
+  * @example A common pattern is to create an `object` that extends this class, and reference that object when retrieving
   *          values from a path.  An additional trait is created that references the custom configuration object, allowing
   *          other classes to mix in the additional trait to get access the the configuration methods that use the
   *          custom configuration object.
@@ -207,7 +200,7 @@ trait ConfigurationLike {
   *   scala> import com.fulcrumgenomics.commons.util.{Configuration, ConfigurationLike}
   *   scala> import com.typesafe.config.{Config, ConfigFactory}
   *   scala> // create an object that stores the config that will be referenced everywhere
-  *   scala> object CustomConfiguration extends Configuration
+  *   scala> object CustomConfiguration extends Configuration(ConfigFactory.load())
   *   scala> // create the trait that can be mixed into other classes to get access to the configuration methods that use the custom configuration object
   *   scala> trait CustomConfiguration extends ConfigurationLike { protected def config: Config = CustomConfiguration.config }
   *   scala> // create a class that mixes in the custom configuration trait
@@ -219,34 +212,33 @@ trait ConfigurationLike {
   *   res1: Option[Long] = None
   * }}}
   */
-trait Configuration extends ConfigurationLike {
-  /** The global configuration instance */
-  private var _config: Config = ConfigFactory.load()
+class Configuration(override protected val config: Config) extends ConfigurationLike {
+  /** The keys requested, in order. */
+  private val _requestedKeys = mutable.Set[String]()
 
-  /** The configuration to query. */
-  protected def config: Config = _config
+
+  /** Method that can be overridden to receive a call each time a configuration path is requested. */
+  override protected def keyRequested(path: String): Unit = this._requestedKeys.add(path)
+
+  /** Returns a sorted set of all keys that have been requested up to this point in time. */
+  def requestedKeys: SortedSet[String] = collection.immutable.TreeSet[String](requestedKeys.toSeq:_*)
 
   /**
-    * Initialize the configuration by loading configuration from the supplied path, and combining it with
-    * configuration information from the system properties (higher priority), application.conf and
-    * reference.conf files (lower priority).
+    * Looks up a single value of a specific type in configuration. If the configuration key
+    * does not exist, an exception is thrown. If the requested type is not supported, an
+    * exception is thrown.
     */
-  def initialize(path: Option[Path]): Unit = path match {
-    case None    =>
-      this._config = ConfigFactory.load()
-    case Some(p) =>
-      // setAllowMissing(false) refers to allowing the file(!) to be missing, not values within the file
-      val options = ConfigParseOptions.defaults().setAllowMissing(false)
-      val localConfig = ConfigFactory.parseFile(p.toFile, options)
+  def apply[T : TypeTag](path: String) : T = fetch[T](path).getOrElse(handle(s"No such configuration key: $path."))
 
-      // This mimics the behaviour of ConfigFactory.load() but with the localConfig sandwiched in
-      this._config = ConfigFactory.defaultOverrides()
-        .withFallback(localConfig)
-        .withFallback(ConfigFactory.defaultApplication())
-        .withFallback(ConfigFactory.defaultReference())
-        .resolve()
-  }
+  /**
+    * Optionally accesses a configuration value. If the value is not present in the configuration
+    * a None will be returned, else a Some(T) of the appropriate type.
+    */
+  def get[T : TypeTag](path: String) : Option[T] = fetch[T](path)
 
-  /** Allows initialization with a custom configuration. */
-  protected def initialize(customConfig: Config): Unit = this._config = customConfig
+  /**
+    * Optionally accesses a configuration value. If the value is not present in the configuration
+    * a the default value will be returned.
+    */
+  def getOrElse[T : TypeTag](path: String, default: => T) : T = get(path).getOrElse(default)
 }
