@@ -29,7 +29,6 @@ import java.time.Duration
 
 import com.fulcrumgenomics.commons.io.{Io, PathUtil}
 import com.fulcrumgenomics.commons.reflect.ReflectionUtil
-import com.fulcrumgenomics.commons.util
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.OptionValues
 
@@ -69,79 +68,79 @@ class ConfigurationLikeTest extends UnitSpec with CaptureSystemStreams with Opti
   private val conf = new TestConfiguration()
 
   "ConfigurationLike" should "lookup basic types with keys that exist" in {
-    conf[String]("a-string") shouldBe "hello"
-    conf[Boolean]("a-boolean") shouldBe true
-    conf[Byte]("a-byte") shouldBe 42.toByte
-    conf[Short]("a-short") shouldBe 123
-    conf[Int]("an-int") shouldBe 12345
-    conf[Long]("a-long") shouldBe 1234567890
-    conf[Float]("a-float") shouldBe 12345.67f
-    conf[Double]("a-double") shouldBe 12345.6789
-    conf[BigInt]("a-bigint") shouldBe BigInt("999999999999999999999999999999999999999999999999999999999999999")
-    conf[BigDecimal]("a-bigdec") shouldBe BigDecimal("999999999999999999999999999999999999999999999999999999999999999.1")
-    conf[Path]("a-path") shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
-    conf[Duration]("some-time") shouldBe Duration.ofSeconds(60)
-    conf[List[String]]("some-string-list") should contain theSameElementsInOrderAs List("a", "list", "of", "strings")
-    conf[List[Int]]("some-int-list") should contain theSameElementsInOrderAs List(1, 2, 3, 4)
-    conf[Seq[Double]]("empty-string-list") shouldBe empty
-    conf[Set[String]]("some-string-set") should contain theSameElementsAs Set("A", "B", "C")
-    conf[Option[String]]("some-option-string").value shouldBe "Some"
-    conf[Option[String]]("option-empty-string").value shouldBe ""
-    conf[Option[String]]("none-option-string") shouldBe 'empty
-    conf[Option[Int]]("some-option-int").value shouldBe 1
-    conf[Option[Int]]("none-option-int") shouldBe 'empty
+    conf.configure[String]("a-string") shouldBe "hello"
+    conf.configure[Boolean]("a-boolean") shouldBe true
+    conf.configure[Byte]("a-byte") shouldBe 42.toByte
+    conf.configure[Short]("a-short") shouldBe 123
+    conf.configure[Int]("an-int") shouldBe 12345
+    conf.configure[Long]("a-long") shouldBe 1234567890
+    conf.configure[Float]("a-float") shouldBe 12345.67f
+    conf.configure[Double]("a-double") shouldBe 12345.6789
+    conf.configure[BigInt]("a-bigint") shouldBe BigInt("999999999999999999999999999999999999999999999999999999999999999")
+    conf.configure[BigDecimal]("a-bigdec") shouldBe BigDecimal("999999999999999999999999999999999999999999999999999999999999999.1")
+    conf.configure[Path]("a-path") shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
+    conf.configure[Duration]("some-time") shouldBe Duration.ofSeconds(60)
+    conf.configure[List[String]]("some-string-list") should contain theSameElementsInOrderAs List("a", "list", "of", "strings")
+    conf.configure[List[Int]]("some-int-list") should contain theSameElementsInOrderAs List(1, 2, 3, 4)
+    conf.configure[Seq[Double]]("empty-string-list") shouldBe empty
+    conf.configure[Set[String]]("some-string-set") should contain theSameElementsAs Set("A", "B", "C")
+    conf.configure[Option[String]]("some-option-string").value shouldBe "Some"
+    conf.configure[Option[String]]("option-empty-string").value shouldBe ""
+    conf.configure[Option[String]]("none-option-string") shouldBe 'empty
+    conf.configure[Option[Int]]("some-option-int").value shouldBe 1
+    conf.configure[Option[Int]]("none-option-int") shouldBe 'empty
   }
 
   it should "support optional configuration" in {
-    conf.get[String]("a-string") shouldBe Some("hello")
+    conf.optionallyConfigure[String]("a-string") shouldBe Some("hello")
     // The following should all behave the same, but check a few just in case
-    conf.get[Long]("non-existent-key") shouldBe None
-    conf.get[Path]("non-existent-key") shouldBe None
-    conf.get[Duration]("non-existent-key") shouldBe None
+    conf.optionallyConfigure[Long]("non-existent-key") shouldBe None
+    conf.optionallyConfigure[Path]("non-existent-key") shouldBe None
+    conf.optionallyConfigure[Duration]("non-existent-key") shouldBe None
   }
 
   it should "support default values" in {
     // All these exist, defaults should be ignored
-    conf.getOrElse[String]("a-string", "wont-get-this") shouldBe "hello"
-    conf.getOrElse[Boolean]("a-boolean", false) shouldBe true
-    conf.getOrElse[Long]("a-long", 999) shouldBe 1234567890
-    conf.getOrElse[Float]("a-float", 999f) shouldBe 12345.67f
-    conf.getOrElse[Path]("a-path", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
-    conf.getOrElse[Path]("a-path", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
+    conf.configure[String]("a-string", "wont-get-this") shouldBe "hello"
+    conf.configure[Boolean]("a-boolean", false) shouldBe true
+    conf.configure[Long]("a-long", 999) shouldBe 1234567890
+    conf.configure[Float]("a-float", 999f) shouldBe 12345.67f
+    conf.configure[Path]("a-path", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
+    conf.configure[Path]("a-path", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/foo/bar/splat.txt")
 
     // And these should all return their defaults
-    conf.getOrElse[String]("not-a-string", "wont-get-this") shouldBe "wont-get-this"
-    conf.getOrElse[Boolean]("not.a-boolean", false) shouldBe false
-    conf.getOrElse[Long]("foo.bar.splat.a-long", 999) shouldBe 999
-    conf.getOrElse[Float]("no-float", 999f) shouldBe 999f
-    conf.getOrElse[Path]("xxx", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/path/to/nowhere")
-    conf.getOrElse[Path]("xxx", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/path/to/nowhere")
+    conf.configure[String]("not-a-string", "wont-get-this") shouldBe "wont-get-this"
+    conf.configure[Boolean]("not.a-boolean", false) shouldBe false
+    conf.configure[Long]("foo.bar.splat.a-long", 999) shouldBe 999
+    conf.configure[Float]("no-float", 999f) shouldBe 999f
+    conf.configure[Path]("xxx", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/path/to/nowhere")
+    conf.configure[Path]("xxx", PathUtil.pathTo("/path/to/nowhere")) shouldBe PathUtil.pathTo("/path/to/nowhere")
   }
 
   private case class Foo(a: Int, bar: String)
 
   it should "throw an exception for unsupported types" in {
 
-    // test apply
+    // test configure (no default)
     {
       val log = captureLogger(() => {
-        an[IllegalArgumentException] should be thrownBy conf[Foo]("a-foo")
+        an[IllegalArgumentException] should be thrownBy conf.configure[Foo]("a-foo")
       })
       log should include("IllegalArgumentException")
     }
 
-    // test get
+    // optionallyConfigure
     {
       val log = captureLogger(() => {
-        an[IllegalArgumentException] should be thrownBy conf.get[Foo]("a-foo")
+        an[IllegalArgumentException] should be thrownBy conf.optionallyConfigure[Foo]("a-foo")
       })
       log should include("IllegalArgumentException")
     }
 
-    // test getOrElse
+    // test configure (with default)
     {
       val log = captureLogger(() => {
-        an[IllegalArgumentException] should be thrownBy conf.getOrElse[Foo]("a-foo", Foo(1, "2"))
+        an[IllegalArgumentException] should be thrownBy conf.configure[Foo]("a-foo", Foo(1, "2"))
       })
       log should include("IllegalArgumentException")
     }
@@ -158,9 +157,9 @@ class ConfigurationLikeTest extends UnitSpec with CaptureSystemStreams with Opti
     )
 
     val conf = new ConfigurationLike {  override val config : Config = ConfigFactory.parseFile(configPath.toFile) }
-    conf[String]("config-name") shouldBe "a-name"
-    conf[Boolean]("config-status") shouldBe false
-    conf.get[String]("config-does-not-exist") shouldBe 'empty
+    conf.configure[String]("config-name") shouldBe "a-name"
+    conf.configure[Boolean]("config-status") shouldBe false
+    conf.optionallyConfigure[String]("config-does-not-exist") shouldBe 'empty
   }
 
   "Configuration" should "load config from a file" in {
@@ -176,17 +175,17 @@ class ConfigurationLikeTest extends UnitSpec with CaptureSystemStreams with Opti
     )
 
     // none of these should exists
-    conf.get[String]("config-name") shouldBe 'empty
-    conf.get[Boolean]("config-status") shouldBe 'empty
-    conf.get[String]("config-does-not-exist") shouldBe 'empty
+    conf.optionallyConfigure[String]("config-name") shouldBe 'empty
+    conf.optionallyConfigure[Boolean]("config-status") shouldBe 'empty
+    conf.optionallyConfigure[String]("config-does-not-exist") shouldBe 'empty
 
     // initialize with the config file
     conf.initialize(path=Some(configPath))
 
     // all but the last should exists
-    conf[String]("config-name") shouldBe "a-name"
-    conf[Boolean]("config-status") shouldBe false
-    conf.get[String]("config-does-not-exist") shouldBe 'empty
+    conf.configure[String]("config-name") shouldBe "a-name"
+    conf.configure[Boolean]("config-status") shouldBe false
+    conf.optionallyConfigure[String]("config-does-not-exist") shouldBe 'empty
 
   }
 }

@@ -49,13 +49,13 @@ import scala.util.{Failure, Success}
   *   scala> val conf = new ConfigurationLike {
   *     val config: Config = ConfigFactory.parseString("""a.str = "string", a.int = 2, a.set = [1,2,3]""")
   *   }
-  *   scala> conf[String]("a.str")
+  *   scala> conf.configure[String]("a.str")
   *   res0: String = string
-  *   scala> conf[Int]("a.int")
+  *   scala> conf.configure[Int]("a.int")
   *   res1: Int = 2
-  *   scala> conf[Set[Int]]("a.set")
+  *   scala> conf.configure[Set[Int]]("a.set")
   *   res2: Set[Int] = Set(1, 2, 3)
-  *   scala> conf[Set[Int]]("a.does-not-exist")
+  *   scala> conf.configure[Set[Int]]("a.does-not-exist")
   *   java.lang.IllegalArgumentException: Exception retrieving configuration key 'a.does-not-exist': No configuration setting found for key 'a.does-not-exist'
   *   ...
   * }}}
@@ -67,13 +67,13 @@ import scala.util.{Failure, Success}
   *   scala> val conf = new ConfigurationLike {
   *     val config: Config = ConfigFactory.parseString("""a.str = "string", a.int = 2, a.set = [1,2,3]""")
   *   }
-  *   scala> conf.get[String]("a.str")
+  *   scala> conf.optionallyConfigure[String]("a.str")
   *   res0: Option[String] = Some(string)
-  *   scala> conf.get[Int]("a.int")
+  *   scala> conf.optionallyConfigure[Int]("a.int")
   *   res1: Option[Int] = Some(2)
-  *   scala> conf.get[Set[Int]]("a.set")
+  *   scala> conf.optionallyConfigure[Set[Int]]("a.set")
   *   res2: Option[Set[Int]] = Some(Set(1, 2, 3))
-  *   scala> conf.get[Set[Int]]("a.does-not-exist")
+  *   scala> conf.optionallyConfigure[Set[Int]]("a.does-not-exist")
   *   res3: Option[Set[Int]] = None
   * }}}
   *
@@ -84,11 +84,11 @@ import scala.util.{Failure, Success}
   *   scala> val conf = new ConfigurationLike {
   *     val config: Config = ConfigFactory.parseString("""a.str = "string", a.int = 2, a.set = [1,2,3]""")
   *   }
-  *   scala> conf.getOrElse[String]("a.does-not-exist", "default")
+  *   scala> conf.configure[String]("a.does-not-exist", "default")
   *   res0: String = default
-  *   scala> conf.getOrElse[Int]("a.does-not-exist", 0)
+  *   scala> conf.configure[Int]("a.does-not-exist", 0)
   *   res1: Int = 0
-  *   scala> conf.getOrElse[Set[Int]]("a.does-not-exist", Set.empty)
+  *   scala> conf.configure[Set[Int]]("a.does-not-exist", Set.empty)
   *   res2: Set[Int] = Set()
   * }}}
   */
@@ -107,7 +107,7 @@ trait ConfigurationLike {
     * does not exist, an exception is thrown. If the requested type is not supported, an
     * exception is thrown.
     */
-  def apply[T : TypeTag](path: String) : T = {
+  def configure[T : TypeTag](path: String) : T = {
     this._requestedKeys.add(path)
     try {
       asType[T](path)
@@ -120,20 +120,25 @@ trait ConfigurationLike {
   }
 
   /**
-    * Optionally accesses a configuration value. If the value is not present in the configuration
-    * a None will be returned, else a Some(T) of the appropriate type.
+    * Looks up a single value of a specific type in configuration. If the configuration key
+    * does not exist, returns the default value provided. If the requested type is not supported, an
+    * exception is thrown.
     */
-  def get[T : TypeTag](path: String) : Option[T] = {
+  def configure[T : TypeTag](path: String, defaultValue: T) : T = {
     this._requestedKeys.add(path)
-    if (config.hasPath(path)) Some(apply[T](path))
-    else None
+    if (config.hasPath(path)) configure[T](path)
+    else defaultValue
   }
 
   /**
     * Optionally accesses a configuration value. If the value is not present in the configuration
     * a None will be returned, else a Some(T) of the appropriate type.
     */
-  def getOrElse[T : TypeTag](path: String, default: => T) : T = this.get(path).getOrElse(default)
+  def optionallyConfigure[T : TypeTag](path: String) : Option[T] = {
+    this._requestedKeys.add(path)
+    if (config.hasPath(path)) Some(configure[T](path))
+    else None
+  }
 
   /** Returns a sorted set of all keys that have been requested up to this point in time. */
   def requestedKeys: SortedSet[String] = collection.immutable.TreeSet[String](requestedKeys.toSeq:_*)
@@ -210,7 +215,7 @@ trait ConfigurationLike {
   *   scala> val foo = new Foo()
   *   scala> foo.maybeLong
   *   res0: Option[Long] = None
-  *   scala> foo.get("path.does-not-exist")
+  *   scala> foo.optionallyConfigure("path.does-not-exist")
   *   res1: Option[Long] = None
   * }}}
   */
