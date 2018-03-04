@@ -167,7 +167,7 @@ trait IoUtil {
   }
 
   /** Writes one or more lines to a file represented by a path. */
-  def writeLines(path: Path, lines: Seq[String]): Unit = {
+  def writeLines(path: Path, lines: TraversableOnce[String]): Unit = {
     val writer = toWriter(path)
     lines.foreach(line => writer.append(line).append('\n'))
     writer.close()
