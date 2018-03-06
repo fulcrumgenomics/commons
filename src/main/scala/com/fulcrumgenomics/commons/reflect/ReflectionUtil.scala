@@ -387,7 +387,7 @@ object ReflectionUtil {
     }
     else if (clazz == classOf[Option[_]]) {
       // unitType shouldn't be an option, since it's supposed to the type *inside* any containers
-      throw new ReflectionException(s"Cannot construct an '${unitType.getSimpleName}' from a string.  Is this an Option[Option[...]]?")
+      throw new ReflectionException(s"Is this an Option[Option[...]]? Cannot construct an '${unitType.getSimpleName}'from a string: $value")
     }
     else if (clazz == classOf[java.lang.Object]) value
     else {
@@ -396,13 +396,15 @@ object ReflectionUtil {
         val ctor: Constructor[_] = clazz.getDeclaredConstructor(classOf[String])
         ctor.setAccessible(true)
         ctor.newInstance(value)
-      }.getOrElse {
+      }.orElse( Try {
         // Last chance: if everything else fails look to see if there is a companion object
         // with an apply(String) method that could work
         val typ             = mirror.classSymbol(clazz).toType
         val companionMirror = mirror.reflectModule(typ.typeSymbol.companion.asModule)
         val companion       = companionMirror.instance
         companion.getClass.getMethod("apply", classOf[String]).invoke(companion, value)
+      }).getOrElse {
+        throw new ReflectionException(s"No suitable single-argument constructor found to construct a '${unitType.getSimpleName}' from a string: $value")
       }
     }
   }
