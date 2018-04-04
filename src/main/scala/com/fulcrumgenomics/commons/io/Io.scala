@@ -26,6 +26,7 @@ package com.fulcrumgenomics.commons.io
 import java.io._
 import java.nio.file.{Files, Path}
 
+import com.fulcrumgenomics.commons.CommonsDef._
 import scala.io.Source
 
 /**
@@ -180,11 +181,27 @@ trait IoUtil {
   /** Creates an object that will asynchronously read character data from a stream and pipe it into a sink function. */
   def pipeStream(stream: InputStream, sink: String => Unit) : AsyncStreamSink = new AsyncStreamSink(stream, sink)
 
-  /** Finds a resource with a given name on the classpath and produces an iterator of lines of text from the resource. */
+  /** Finds a resource with a given name on the classpath and produces an iterator of lines of text from the resource.
+    *
+    * The way resources are traditionally loaded from the class path via `Class.getResource()` and
+    * `ClassLoader.getResource()` have confusing behaviour.  Notably:
+    *
+    * * Class.getResource() interprets paths as relative, and requires a leading `/` to make them absolute
+    * * ClassLoader.getResource() interprets all paths a absolute and fails on leading `/`s
+    *
+    * The implementation here first tries `Class.getResource` and then `ClassLoader.getResource` to enable it to
+    * find relative paths and also absolute paths with and without leading `/s`.
+    *
+    */
   def readLinesFromResource(name: String): Iterator[String] = {
-    val in = getClass.getResourceAsStream(name)
-    require(in != null, s"Resource does not exist at path: $name")
-    val stream = new BufferedInputStream(in, bufferSize)
-    Source.fromInputStream(stream).withClose(() => stream.close()).getLines
+    Seq(getClass.getResourceAsStream _, getClass.getClassLoader.getResourceAsStream _)
+      .flatMap(m => Option(m(name)))
+      .headOption match {
+        case None     =>
+          throw new IllegalArgumentException(s"Resource does not exist at path: $name")
+        case Some(in) =>
+          val stream = new BufferedInputStream(in, bufferSize)
+          Source.fromInputStream(stream).withClose(() => stream.safelyClose()).getLines
+    }
   }
 }

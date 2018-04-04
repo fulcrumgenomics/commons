@@ -164,12 +164,23 @@ class IoTest extends UnitSpec {
     roundtripped shouldBe lines
   }
 
+  // The expected lines from the file loaded as a resource
+  private val ResourceLines = Io.readLines(Paths.get("src/test/resources/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt")).toList
+
   "Io.readLinesFromResource" should "read lines from a resource" in {
     val actual = Io.readLinesFromResource("/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt").toList
-    val file = Paths.get("src/test/resources/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt")
-    val expected = Io.toSource(file).getLines().toList
+    actual shouldBe ResourceLines
+  }
 
-    actual shouldBe expected
+  it should "work without a leading slash" in {
+    val actual = Io.readLinesFromResource("com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt").toList
+    actual shouldBe ResourceLines
+  }
+
+  it should "work with a relative path" in {
+    // This works because the resource is in the same package as this test class
+    val actual = Io.readLinesFromResource("to-lines-from-resource-test.txt").toList
+    actual shouldBe ResourceLines
   }
 
   it should "fail when the resource does not exist" in {
