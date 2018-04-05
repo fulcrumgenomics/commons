@@ -32,10 +32,10 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = Command.process("publishSigned", _)),
+  releaseStepCommand("publishSigned"),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+  releaseStepCommand("sonatypeReleaseAll"),
   pushChanges
 )
 
@@ -110,7 +110,6 @@ lazy val assemblySettings = Seq(
 
 lazy val root = Project(id="commons", base=file("."))
   .settings(commonSettings: _*)
-  .settings(unidocSettings: _*)
   .settings(assemblySettings: _*)
   .settings(description := "Scala commons for Fulcrum Genomics.")
   .settings(
@@ -121,10 +120,3 @@ lazy val root = Project(id="commons", base=file("."))
       "org.scalatest"  %% "scalatest"     % "3.0.1"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
   )
-
-lazy val shadowJar = TaskKey[Unit]("shadowJar", "Creates an assembly JAR without the trailing git hash and SNAPSHOT in the name")
-shadowJar := assembly map { (asm) => 
-  val regex = "-[a-z0-9]+-SNAPSHOT.jar".r
-  val jar   = regex.replaceAllIn(asm.getPath, ".jar")
-  Seq("cp", asm.getPath, jar) !!
-}
