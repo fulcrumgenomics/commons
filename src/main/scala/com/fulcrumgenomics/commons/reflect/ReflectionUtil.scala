@@ -370,8 +370,8 @@ object ReflectionUtil {
   private[reflect] def buildUnitFromString(unitType: Class[_], value: String) : Try[Any] = Try {
     val clazz = ifPrimitiveThenWrapper(unitType)
     if (clazz.isEnum) {
-      lazy val badArgumentString = s"'$value' is not a valid value for ${clazz.getSimpleName}. " +
-        enumOptions(clazz.asInstanceOf[Class[_ <: Enum[_ <: Enum[_]]]]).get
+      lazy val badArgumentString = s"'$value' is not a valid value for ${clazz.getSimpleName}. Valid values: " +
+        enumOptions(clazz.asInstanceOf[Class[_ <: Enum[_ <: Enum[_]]]]).get.mkString(", ") + "."
       val maybeEnum = clazz.getEnumConstants.map(_.asInstanceOf[Enum[_]]).find(e => e.name() == value)
       maybeEnum.getOrElse(throw new ReflectionException(badArgumentString))
     }

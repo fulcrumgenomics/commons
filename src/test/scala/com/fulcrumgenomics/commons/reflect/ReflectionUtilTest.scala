@@ -356,7 +356,9 @@ class ReflectionUtilTest extends UnitSpec {
   }
 
   "ReflectionUtil.buildUnitFromString" should "throw an Exception when an unknown enum value is given" in {
-    an[Exception] should be thrownBy ReflectionUtil.buildUnitFromString(classOf[GoodEnum], value="DOG").get
+    val exception = intercept[Exception] { ReflectionUtil.buildUnitFromString(classOf[GoodEnum], value="DOG").get }
+    exception.getMessage should not include "WrappedArray"
+    GoodEnum.values().foreach { value => exception.getMessage should include (value.name()) }
   }
 }
 
