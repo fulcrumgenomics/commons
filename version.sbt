@@ -3,5 +3,5 @@ gitHeadCommitSha in ThisBuild := Process("git rev-parse --short HEAD").lines.hea
 
 // *** IMPORTANT *** 
 // One of the two "version" lines below needs to be uncommented.
-// version in ThisBuild := "0.5.0" // the release version
- version in ThisBuild := s"0.5.0-${gitHeadCommitSha.value}-SNAPSHOT" // the snapshot version
+version in ThisBuild := "0.5.0" // the release version
+// version in ThisBuild := s"0.6.0-${gitHeadCommitSha.value}-SNAPSHOT" // the snapshot version
