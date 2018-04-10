@@ -387,7 +387,7 @@ object ReflectionUtil {
     }
     else if (clazz == classOf[Option[_]]) {
       // unitType shouldn't be an option, since it's supposed to the type *inside* any containers
-      throw new ReflectionException(s"Cannot construct an '${unitType.getSimpleName}' from a string.  Is this an Option[Option[...]]?")
+      throw new ReflectionException(s"Is this an Option[Option[...]]? Cannot construct an '${unitType.getSimpleName}'from a string: $value")
     }
     else if (clazz == classOf[java.lang.Object]) value
     else {
@@ -396,14 +396,22 @@ object ReflectionUtil {
         val ctor: Constructor[_] = clazz.getDeclaredConstructor(classOf[String])
         ctor.setAccessible(true)
         ctor.newInstance(value)
-      }.getOrElse {
-        // Last chance: if everything else fails look to see if there is a companion object
-        // with an apply(String) method that could work
-        val typ             = mirror.classSymbol(clazz).toType
-        val companionMirror = mirror.reflectModule(typ.typeSymbol.companion.asModule)
-        val companion       = companionMirror.instance
-        companion.getClass.getMethod("apply", classOf[String]).invoke(companion, value)
-      }
+      } recover {
+        case _: NoSuchMethodException => // no single-arg string constructor found
+          Try[Any] {
+            // Last chance: if everything else fails look to see if there is a companion object
+            // with an apply(String) method that could work
+            val typ             = mirror.classSymbol(clazz).toType
+            val companionMirror = mirror.reflectModule(typ.typeSymbol.companion.asModule)
+            val companion       = companionMirror.instance
+            companion.getClass.getMethod("apply", classOf[String]).invoke(companion, value)
+          } recover { case ex: ClassNotFoundException => // companion was not found
+            throw new ReflectionException(s"No suitable single-argument constructor found to construct a '${unitType.getSimpleName}' from a string: $value", ex)
+          } get
+      } recover {
+        case ex: ReflectionException => throw ex
+        case ex: Exception           => throw new ReflectionException(s"Could not build a '${unitType.getSimpleName}' from a string: $value", ex)
+      } get
     }
   }
 

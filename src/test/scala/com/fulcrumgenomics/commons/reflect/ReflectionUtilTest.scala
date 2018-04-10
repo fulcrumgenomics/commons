@@ -244,6 +244,11 @@ class ReflectionUtilTest extends UnitSpec {
     ReflectionUtil.constructFromString(classOf[PathToSomething], classOf[PathToSomething], PathUtil.pathTo("b", "c").toString).get shouldBe PathUtil.pathTo("b", "c")
   }
 
+  it should "construct an URI from a string" in {
+    import java.net.URI
+    ReflectionUtil.constructFromString(classOf[URI], classOf[URI], "http://A/B").get shouldBe new URI("http://A/B")
+  }
+
   it should "construct an String from a string for a String field in a child class" in {
     ReflectionUtil.constructFromString(classOf[String], classOf[String], "str").get shouldBe "str"
   }
