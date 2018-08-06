@@ -28,7 +28,6 @@ import java.nio.file.{Files, Path}
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
-import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /**
