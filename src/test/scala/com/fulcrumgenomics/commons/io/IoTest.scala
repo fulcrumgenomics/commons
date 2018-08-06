@@ -23,6 +23,7 @@
  */
 package com.fulcrumgenomics.commons.io
 
+import java.io.{BufferedOutputStream, FileOutputStream}
 import java.nio.file.{Files, Path, Paths}
 
 import com.fulcrumgenomics.commons.util.UnitSpec
@@ -185,5 +186,11 @@ class IoTest extends UnitSpec {
 
   it should "fail when the resource does not exist" in {
     an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
+  }
+
+  "Io.readBytesFromResource" should "correctly read binary data from a resource" in {
+    val expected = Range.inclusive(Byte.MinValue, Byte.MaxValue).map(_.toByte).toArray
+    val actual = Io.readBytesFromResource("/com/fulcrumgenomics/commons/io/to-bytes-from-resource-test.bin")
+    actual shouldBe expected
   }
 }
