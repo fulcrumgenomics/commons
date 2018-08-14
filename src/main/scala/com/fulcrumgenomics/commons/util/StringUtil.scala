@@ -154,4 +154,29 @@ object StringUtil {
         throw new IllegalArgumentException("columnIt failed.  Did you forget to input an NxM table?")
     }
   }
+
+  /** Splits line on delimiter, placing up to `arr.length` values into `arr` and returning the number of values. */
+  def split(line: String, delimiter: Char = '\t', arr: Array[String]): Int = {
+    val cs    = line.toCharArray
+    val len   = cs.length
+    var i     = 0
+    var count = 0
+    var start = 0
+    var end   = 0
+
+    while (i <= len && count < arr.length) {
+      if (i == len || cs(i) == delimiter) {
+        arr(count) = new String(cs, start, end-start)
+        count += 1
+        start = i + 1
+        end   = i + 1
+      }
+      else {
+        end += 1
+      }
+
+      i += 1
+    }
+    count
+  }
 }

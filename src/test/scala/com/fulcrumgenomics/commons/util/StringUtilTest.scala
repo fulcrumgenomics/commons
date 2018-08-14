@@ -110,7 +110,18 @@ class StringUtilTest extends UnitSpec {
     StringUtil.addSpacesToCamelCase("b") should be ("b")
   }
 
-  it should "add a space between adjacen upper case characters" in {
+  it should "add a space between adjacent upper case characters" in {
     StringUtil.addSpacesToCamelCase("BBIAB") should be ("B B I A B")
+  }
+
+  "StringUtil.split" should "split a line bases on a delimiter" in {
+    Seq("", ",b,c,d,", "a,b,c,d,", "a,b,c,d,e").foreach { line =>
+      Seq(0, 1, 3, 5, 7).foreach { arraySize =>
+        val actual   = Array.fill(arraySize)("")
+        val expected = line.split(",", -1).take(arraySize) // NB: no limit on the split!
+        StringUtil.split(line = line, delimiter = ',', arr = actual) shouldBe math.min(actual.length, expected.length)
+        actual.take(expected.length) should contain theSameElementsInOrderAs expected
+      }
+    }
   }
 }

@@ -132,27 +132,7 @@ class DelimitedDataParser(lines: TraversableOnce[String],
 
   /** Splits the line into it's constituent fields. */
   protected[util] def split(line: String): Array[String] = {
-    val cs = line.toCharArray
-    val len = cs.length
-    var i = 0
-    var count = 0
-    var start = 0
-    var end = 0
-
-    while (i <= len && count < this.tmp.length) {
-      if (i == len || cs(i) == this.delimiter) {
-        this.tmp(count) = new String(cs, start, end-start)
-        count += 1
-        start = i + 1
-        end   = i + 1
-      }
-      else {
-        end += 1
-      }
-
-      i += 1
-    }
-
+    val count  = StringUtil.split(line=line, delimiter=this.delimiter, arr=this.tmp)
     val fields = new Array[String](count)
     System.arraycopy(this.tmp, 0, fields, 0, count)
     fields
