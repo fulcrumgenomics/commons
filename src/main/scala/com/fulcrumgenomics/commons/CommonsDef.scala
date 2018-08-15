@@ -25,11 +25,13 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
+import java.util.Comparator
 
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
-import scala.collection.Parallelizable
+import scala.collection.mutable.ListBuffer
+import scala.collection.{LinearSeq, LinearSeqOptimized, Parallelizable, SeqLike}
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterableLike, TaskSupport}
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.language.implicitConversions
@@ -134,6 +136,99 @@ class CommonsDef {
       } catch {
         case e: Exception => logger.foreach(_.exception(e))
       }
+    }
+  }
+
+  implicit class MaxNBy[A](val things: TraversableOnce[A]) {
+    /** Finds the first `n` elements with the largest values.
+      *
+      * @param n the number of elements return.
+      * @param distinct true to return the first `n` distinct elements, otherwise false to allow duplicate elements.
+      * @param cmp the implicit comparison method for type [[A]].
+      * @return  the first `n` elements of this traversable or iterator with the largest values.
+      */
+    def maxN(n: Int, distinct: Boolean = false)(implicit cmp: Ordering[A]): Seq[A] = this.maxNBy[A](n, thing => thing, distinct)
+
+    /** Finds the first `n` elements with the largest values measured by function f.
+      *
+      * @param n the number of elements return.
+      * @param f the measuring function.
+      * @param distinct true to return the first `n` distinct elements, otherwise false to allow duplicate elements.
+      * @param cmp the implicit comparison method for type [[B]].
+      * @tparam B the result type of the function f.
+      * @return  the first `n` elements of this traversable or iterator with the largest values measured by function f.
+      */
+    def maxNBy[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = if (things.isEmpty || n == 0) Seq.empty[A] else {
+      // Developer Note: a future improvement would be to determine when to use maxNBySmall vs. maxNByLarge.  Also,
+      // if we want to get n items from a sequence that is close to length m, we could find the m-n items to remove, as
+      // to save memory.
+      things match {
+        case _things: Seq[A] => if (_things.length <= n && n < 1024) maxNBySmall(_things, n, f, distinct) else  maxNByLarge(n, f, distinct)
+        case _               => maxNByLarge(n, f, distinct)
+      }
+    }
+
+    /** Companion to [[ThingAndValue]] that provides various apply methods. */
+    private object ThingAndValue {
+      def apply[B](thing: A, value: B)(implicit cmp: Ordering[B]): ThingAndValue[B] = new UnindexedThingAndValue[B](thing, value)
+      def apply[B](thing: A, value: B, index: Int)(implicit cmp: Ordering[B]): ThingAndValue[B] = new IndexedThingAndValue[B](thing, value, index)
+    }
+
+    /** The base trait for storing things and values, where the "thing"s can ordered by the "value"s. */
+    private sealed trait ThingAndValue[B] extends Comparable[ThingAndValue[B]] {
+      implicit def cmp: Ordering[B]
+      def thing: A
+      def value: B
+      override def compareTo(that: ThingAndValue[B]): Int = cmp.compare(that.value, this.value) // sort by the maximum
+
+    }
+
+    /** A little class to store the "things" and their "values". */
+    private case class UnindexedThingAndValue[B](thing: A, value: B)(implicit val cmp: Ordering[B]) extends ThingAndValue[B]
+
+    /** A little class to store the "things" and their "values", as well as their index in the original collection.  We
+      * use the index to distinguish between duplicates. */
+    private case class IndexedThingAndValue[B](thing: A, value: B, index: Int)(implicit val cmp: Ordering[B]) extends ThingAndValue[B] {
+      override def compareTo(that: ThingAndValue[B]): Int = that match {
+        case _that: IndexedThingAndValue[B] =>
+          // sort by maximum value first, then by smaller index
+          cmp.compare(_that.value, this.value) match {
+            case 0 => this.index.compareTo(_that.index)
+            case r => r
+          }
+        case _ => super.compareTo(that)
+      }
+    }
+
+    /** Implementation of [[maxNBy()]] for when the # of elements is "small". */
+    @inline
+    private def maxNBySmall[B](things: Seq[A], n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = {
+      if (distinct) things.map(t => ThingAndValue(t, f(t))).sorted.map(_.thing).distinct
+      else things.zipWithIndex.map { case (t, i) => ThingAndValue(t, f(t), i) }.sorted.map(_.thing)
+    }
+
+    /** Implementation of [[maxNBy()]] for when the # of elements is "large". */
+    @inline
+    private def maxNByLarge[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = {
+      val orderedThings = new java.util.TreeSet[ThingAndValue[B]]()
+      val toThingAndValue: (A, Int) => ThingAndValue[B] = {
+        if (distinct) (t: A, _: Int) => ThingAndValue(t, f(t)) else (t: A, i: Int) => ThingAndValue(t, f(t), i)
+      }
+      this.things.toIterator.zipWithIndex.foreach { case (thing, index) =>
+        val thingAndValue = toThingAndValue(thing, index)
+        // If we haven't reached N yet, add it.  If the last element is "smaller" than the curret one, add it.  Otherwise, don't!
+        if (orderedThings.isEmpty || orderedThings.size() < n) orderedThings.add(thingAndValue)
+        else {
+          // The last thing should exist, so compare it to the current
+          val lastThingAndValue = orderedThings.last()
+          if (lastThingAndValue.compareTo(thingAndValue) > 0) {
+            // Only remove the last thing if the new thing was added
+            if (orderedThings.add(thingAndValue)) orderedThings.pollLast()
+          }
+        }
+        require(orderedThings.size <= n, s"$n ${orderedThings.toList}")
+      }
+      orderedThings.map(_.thing).toList
     }
   }
 
