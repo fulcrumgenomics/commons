@@ -58,4 +58,20 @@ class SimpleCounterTest extends UnitSpec {
     counter.countOf("whee")  shouldBe 1
     counter.countOf("huh?")  shouldBe 0
   }
+
+  it should "add another counter to itself" in {
+    val counterItems = Seq("foo", "bar", "splat", "foo", "whee")
+    val otherItems   = Seq("foo", "boo", "zoo", "who knew", "whee")
+    val counter      = SimpleCounter(counterItems)
+    val other        = SimpleCounter(otherItems)
+    val expected     = SimpleCounter(counterItems ++ otherItems)
+    val itself       = counter += other
+
+    // check the return of +=
+    itself shouldBe counter
+    // check the items were added to the counter
+    counter.iterator.toList should contain theSameElementsAs expected.iterator.toList
+    // ensure that other was not modified
+    other.iterator.toList should contain theSameElementsAs SimpleCounter(otherItems).iterator.toList
+  }
 }
