@@ -63,4 +63,10 @@ class SimpleCounter[T]extends Iterable[(T, Long)] {
 
   /** Gets the number of counts stored in this counter (sum over all count). */
   def total: Long = _total
+
+  /** Adds the items and counts in `other` to the counts here. */
+  def +=(other: SimpleCounter[T]): this.type = {
+    other.foreach { case (item, count) => this.count(item, count) }
+    this
+  }
 }
