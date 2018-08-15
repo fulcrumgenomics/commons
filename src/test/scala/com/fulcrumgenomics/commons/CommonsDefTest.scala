@@ -25,8 +25,10 @@
 package com.fulcrumgenomics.commons
 
 import java.io.{Closeable, IOException}
+import java.text.{DecimalFormat, NumberFormat}
 
 import com.fulcrumgenomics.commons.CommonsDef._
+import com.fulcrumgenomics.commons.CommonsDef.MaxNBy
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.UnitSpec
 
@@ -127,6 +129,51 @@ class CommonsDefTest extends UnitSpec {
       result.isFailure shouldBe true
     }
   }
+
+  "CommonsDef.maxN" should "return the maximum N elements" in {
+    an[Exception] should be thrownBy Seq.empty[Int].maxN(0)
+    Seq.empty[Int].maxN(1) shouldBe 'empty
+    val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
+    val sorted = seq.sortBy(s => -s)
+    Range.inclusive(start=1, end=seq.length*2).foreach { n => // tests asking both fewer and more than the # of elements
+      seq.maxN(n) should contain theSameElementsInOrderAs sorted.take(n)
+      seq.maxN(n, distinct=true) should contain theSameElementsInOrderAs sorted.distinct.take(n)
+    }
+  }
+
+  "CommonsDef.maxNBy" should "return the maximum N elements compared by a given method" in {
+    an[Exception] should be thrownBy Seq.empty[Int].maxNBy(0, identity)
+    Seq.empty[Int].maxNBy(1, identity) shouldBe 'empty
+    val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
+    val sorted = seq.sorted
+    Range.inclusive(start=1, end=seq.length*2).foreach { n => // tests asking both fewer and more than the # of elements
+      //seq.maxNBy(n, s => -s) should contain theSameElementsInOrderAs sorted.take(n)
+      seq.maxNBy(n, s => -s, distinct=true) should contain theSameElementsInOrderAs sorted.distinct.take(n)
+    }
+  }
+
+
+  // Comment this out to get performance testing
+  /**
+  "CommonsDef.maxN" should "should run quicly" in {
+    val r = scala.util.Random
+    r.setSeed(13)
+
+    Range.inclusive(start=1, end=100000, step=10000).foreach { len =>
+      val values = Range.inclusive(start=1, end=len, step=1).map(_ => r.nextInt)
+
+      Range.inclusive(1, 100, 25).map(_ / 100.0).foreach { frac =>
+        val n = (frac * len).toInt
+        if (n > 0) {
+          val start = System.currentTimeMillis
+          values.maxN(n)
+          val time = System.currentTimeMillis - start
+          println(s"len: $len n: $n time: $time")
+        }
+      }
+    }
+  }
+  */
 
   "forloop(Int,Int,Int)" should "work just like a regular single-index for loop" in {
     val buffer = ListBuffer[Int]()

@@ -25,11 +25,12 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
+import java.util.Comparator
 
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
-import scala.collection.Parallelizable
+import scala.collection.{Parallelizable, SeqLike}
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterableLike, TaskSupport}
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.language.implicitConversions
@@ -134,6 +135,65 @@ class CommonsDef {
       } catch {
         case e: Exception => logger.foreach(_.exception(e))
       }
+    }
+  }
+
+  implicit class MaxNBy[A](things: TraversableOnce[A]) {
+    def maxN[B](n: Int, distinct: Boolean = false)(implicit cmp: Ordering[A]): Seq[A] = this.maxNBy[A](n, thing => thing, distinct)
+
+    def maxNBy[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = {
+      require(0 < n, "n must be greater than zero")
+      // Developer Note: a future improvement would be to determine when to use maxNBySmall vs. maxNByLarge.  Also,
+      // if we want to get n items from a sequence that is close to length m, we could find the m-n items to remove, as
+      // to save memory.
+      things match {
+        case _things: Seq[A] if _things.lengthCompare(n) <= 0 && n < 1024 => maxNBySmall(_things, n, f, distinct)
+        case _                                                            => maxNByLarge(n, f, distinct)
+      }
+    }
+
+    @inline
+    private def maxNBySmall[B](things: Seq[A], n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = {
+      if (distinct) things.sortWith((a, b) => cmp.gteq(f(a), f(b))).distinct
+      else {
+        things.zipWithIndex.sortWith { case ((a, ai), (b, bi)) =>
+          val retval = cmp.compare(f(b), f(a)) match {
+            case 0 => ai.compareTo(bi)
+            case r => r
+          }
+          retval < 0
+        }.map(_._1)
+      }
+    }
+
+    @inline
+    private def maxNByLarge[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = {
+      // A little class to store the "things" and their "values".  We use the index to distinguish between duplicates.
+      case class ThingAndValue(index: Int, thing: A, value: B) extends Comparable[ThingAndValue] {
+        override def compareTo(that: ThingAndValue): Int = {
+          // sort by maximum value first, then by smaller index
+          cmp.compare(that.value, this.value) match {
+            case 0 => this.index.compareTo(that.index)
+            case r => r
+          }
+        }
+      }
+      val orderedThings = new java.util.TreeSet[ThingAndValue]()
+      this.things.toIterator.zipWithIndex.foreach { case (thing, index) =>
+        val thingAndValue = ThingAndValue(if (distinct) 0 else index, thing, f(thing))
+        // If we haven't reached N yet, add it.  If the last element is "smaller" than the curret one, add it.  Otherwise, don't!
+        if (orderedThings.isEmpty || orderedThings.size() < n) orderedThings.add(thingAndValue)
+        else {
+          // The last thing should exist, so compare it to the currnt
+          val lastThingAndValue = orderedThings.last()
+          if (lastThingAndValue.compareTo(thingAndValue) > 0) {
+            // Only remove the last thing if the new thing was added
+            if (orderedThings.add(thingAndValue)) orderedThings.remove(lastThingAndValue)
+          }
+        }
+        require(orderedThings.size <= n)
+      }
+      orderedThings.map(_.thing).toList
     }
   }
 
