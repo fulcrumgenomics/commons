@@ -150,12 +150,16 @@ object StringUtil {
       }.mkString("\n")
     }
     catch {
-      case ex: java.lang.IndexOutOfBoundsException =>
+      case _: java.lang.IndexOutOfBoundsException =>
         throw new IllegalArgumentException("columnIt failed.  Did you forget to input an NxM table?")
     }
   }
 
-  /** Splits line on delimiter, placing up to `arr.length` values into `arr` and returning the number of values. */
+  /** Splits line on delimiter, placing up to `arr.length` values into `arr` and returning the number of values.
+    *
+    * Multiple consecutive delimiters are treated as individual delimiters, delimiting empty fields. E.g. with
+    * `delimiter=','` the string `a,b,,,c` will return `["a", "b", "", "", "c"]`.
+    * */
   def split(line: String, delimiter: Char = '\t', arr: Array[String]): Int = {
     val cs    = line.toCharArray
     val len   = cs.length
