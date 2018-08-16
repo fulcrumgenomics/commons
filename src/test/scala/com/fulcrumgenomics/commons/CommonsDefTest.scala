@@ -131,7 +131,8 @@ class CommonsDefTest extends UnitSpec {
   }
 
   "CommonsDef.maxN" should "return the maximum N elements" in {
-    an[Exception] should be thrownBy Seq.empty[Int].maxN(0)
+    Seq.empty[Int].maxN(0) shouldBe 'empty
+    Seq(1,2,3,4).maxN(0) shouldBe 'empty
     Seq.empty[Int].maxN(1) shouldBe 'empty
     val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
     val sorted = seq.sortBy(s => -s)
@@ -142,7 +143,8 @@ class CommonsDefTest extends UnitSpec {
   }
 
   "CommonsDef.maxNBy" should "return the maximum N elements compared by a given method" in {
-    an[Exception] should be thrownBy Seq.empty[Int].maxNBy(0, identity)
+    Seq.empty[Int].maxNBy(0, identity) shouldBe 'empty
+    Seq(1,2,3,4).maxNBy(0, identity) shouldBe 'empty
     Seq.empty[Int].maxNBy(1, identity) shouldBe 'empty
     val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
     val sorted = seq.sorted
@@ -155,7 +157,7 @@ class CommonsDefTest extends UnitSpec {
 
   // Comment this out to get performance testing
   /**
-  "CommonsDef.maxN" should "should run quicly" in {
+  "CommonsDef.maxN" should "should run quickly" in {
     val r = scala.util.Random
     r.setSeed(13)
 
