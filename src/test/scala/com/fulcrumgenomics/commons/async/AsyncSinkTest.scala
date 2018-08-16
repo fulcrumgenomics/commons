@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2017 Fulcrum Genomics LLC
+ * Copyright (c) 2018 Fulcrum Genomics LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,42 +24,13 @@
 
 package com.fulcrumgenomics.commons.async
 
-import com.fulcrumgenomics.commons.async.Async.{AsyncIterator, AsyncSink, AsyncWriter, AsyncMultiWriter}
 import com.fulcrumgenomics.commons.io.Writer
 import com.fulcrumgenomics.commons.util.UnitSpec
 import org.scalatest.OptionValues
 
-import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Random, Try}
+import scala.util.{Failure, Try}
 
-class AsyncTest extends UnitSpec with OptionValues {
-  "AsyncIterator" should "wrap an empty iterator" in {
-    val iter = new AsyncIterator(Iterator[String]())
-    iter.hasNext shouldBe false
-    iter shouldBe 'empty
-    an[NoSuchElementException] should be thrownBy iter.next()
-  }
-
-  Seq((10, "fewer"), (20, "the same number of"), (30, "more")).foreach { case (numItems, msg) =>
-    it should s"wrap an iterator that has $msg items than bufferSize" in {
-      val source = Seq.range(start=0, end=numItems)
-      val items = new AsyncIterator(source.toIterator, bufferSize=Some(20)).toList
-      items should contain theSameElementsInOrderAs source
-    }
-  }
-
-  /** Writer useful for testing.  It stores when close() is called, and all items written. */
-  private class StringWriter(var block: Boolean = false) extends Writer[String] {
-    var closed: Boolean = false
-    var items: ListBuffer[String] = new ListBuffer[String]()
-    def write(item: String): Unit = {
-      while (this.block) {
-        Thread.sleep(10)
-      }
-      items += item
-    }
-    def close(): Unit = this.closed = true
-  }
+class AsyncSinkTest extends UnitSpec with OptionValues {
 
   private trait RunnableWithResult extends Runnable {
     def done: Boolean
@@ -200,45 +171,5 @@ class AsyncTest extends UnitSpec with OptionValues {
     addThread.join()
   }
 
-  "AsyncWriter" should "write a bunch of strings" in {
-    val random      = new Random(42)
-    val writer      = new StringWriter
-    val asyncWriter = new AsyncWriter[String](writer)
-    val strings     = Seq.range(start=0, end=1000).map { i =>
-      val string = random.nextString(80)
-      asyncWriter.write(string)
-      string
-    }
-    asyncWriter.close()
-    strings should contain theSameElementsInOrderAs writer.items
-  }
 
-  "AsyncMultiWriter" should "require at least one writer" in {
-    an[Exception] should be thrownBy new AsyncMultiWriter[String](writers=Seq.empty, parallelism=1)
-  }
-
-  {
-    val random = new Random(42)
-    val strings = Seq.range(start=0, end=1000).map { i =>
-      math.abs(random.nextInt).toString
-    }
-
-    Seq((2, 4), (5, 3), (3, 3)).foreach { case (numWriters, parallelism) =>
-      val message = (numWriters, parallelism) match {
-        case (n, m) if n < m  => "N < M"
-        case (n, m) if n > m  => "N > M"
-        case (n, m) if n == m => "N == M"
-      }
-      it should s"write with N writers and M threads ($message)" in {
-        val writers = IndexedSeq.range(start=0, end=numWriters).map { _ => new StringWriter }
-        val writer  = new AsyncMultiWriter[String](writers=writers, parallelism=parallelism, bufferSize=Some(5))
-        strings.foreach { s => writer.write(s, s.toInt % numWriters) }
-        writer.close()
-        writers.forall(_.closed) shouldBe true
-        strings.groupBy(_.toInt % numWriters).foreach { case (i, strs) =>
-          writers(i).items should contain theSameElementsInOrderAs strs
-        }
-      }
-    }
-  }
 }
