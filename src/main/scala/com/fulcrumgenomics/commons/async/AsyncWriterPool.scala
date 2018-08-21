@@ -58,43 +58,41 @@ class AsyncWriterPool(threads: Int) extends Closeable {
   private val executor   = Executors.newFixedThreadPool(threads)
   private val writers    = new CopyOnWriteArrayList[PooledWriter[_]]()
   private val poolClosed = new AtomicBoolean(false)
+  Range(0, threads).foreach(_ => executor.submit(new Drainer))
 
   /**
     * Wraps a [[Writer[A]]] in the context of an [[AsyncWriterPool]] to provide asynchronous operations.
     * Calls to [[write()]] and related methods place items into the queue, and if necessary, schedule
     * the queue for draining using the [[executor]] in the enclosing [[AsyncWriterPool]].
     */
-  class PooledWriter[A] private[AsyncWriterPool] (private val writer: Writer[A], private val queue: BlockingQueue[A]) extends Writer[A] {
+  class PooledWriter[A] private[AsyncWriterPool] (private val writer: Writer[A],
+                                                  private val queue: BlockingQueue[A]) extends Writer[A] {
     /** A reference to an exception thrown during an asynchronous operation. */
-    private val throwable: AtomicReference[Throwable] = new AtomicReference(null)
+    private[AsyncWriterPool] val throwable: AtomicReference[Throwable] = new AtomicReference(null)
 
     /** True if this writer is enqueued to be drained, false otherwise. */
-    private val enqueued: AtomicBoolean = new AtomicBoolean(false)
+    private[AsyncWriterPool] val draining: AtomicBoolean = new AtomicBoolean(false)
 
-    /** A runnable that can be enqueued to drain this writer's queue to the real output writer. */
-    private val drainer = new Runnable {
-      /** Drains the queue to the output writer. */
-      def drain(): Unit = {
+    /** Drains the queue to the underlying writer. Returns the count of items drained. */
+    private[AsyncWriterPool] def drain(): Int = {
+      this.synchronized {
         var item: A = queue.poll()
+        var count = 0
         while (item != null) {
           writer.write(item)
+          count += 1
           item = queue.poll()
         }
-      }
 
-      /** Drains the queue, storing any thrown exception into the PooledWriters `throwable`. */
-      override def run(): Unit = {
-        try     { drain() }
-        catch   { case t: Throwable => throwable.compareAndSet(null, t) }
-        finally { enqueued.set(false) }
+        count
       }
     }
 
     /** True if a close() method hs been called, even if closing() hasn't happened yet. */
-    private val writerCloseRequested: AtomicBoolean = new AtomicBoolean(false)
+    private[AsyncWriterPool] val writerCloseRequested: AtomicBoolean = new AtomicBoolean(false)
 
     /** True if a close() method has been called, false otherwise. */
-    private val writerClosed: AtomicBoolean = new AtomicBoolean(false)
+    private[AsyncWriterPool] val writerClosed: AtomicBoolean = new AtomicBoolean(false)
 
     /** Checks to see if an exception has been raised asynchronously, and rethrows it on the current thread. */
     private def checkAndRaise(): Unit = {
@@ -106,22 +104,17 @@ class AsyncWriterPool(threads: Int) extends Closeable {
     override def write(item: A): Unit = {
       checkAndRaise()
       if (writerCloseRequested.get()) throw new IllegalStateException("Cannot write to closed() writer.")
-
-      // Enqueue the item and optionally enqueue ths writer for output
-      this.queue.add(item)
-      val previouslyEnqueued = this.enqueued.getAndSet(true)
-      if (!previouslyEnqueued) executor.submit(drainer)
+      queue.put(item)
     }
 
     /** Closes the writer _synchronously_ on the current thread. */
     override def close(): Unit = {
       checkAndRaise()
       writerCloseRequested.set(true)
+      AsyncWriterPool.this.writers.remove(this)
       if (!writerClosed.getAndSet(true)) {
-        while (enqueued.get()) Thread.sleep(50)
-        if (this.queue.nonEmpty) this.drainer.drain()
+        drain()
         writer.close()
-        AsyncWriterPool.this.writers.remove(this)
       }
     }
 
@@ -130,6 +123,25 @@ class AsyncWriterPool(threads: Int) extends Closeable {
       checkAndRaise()
       writerCloseRequested.set(true)
       executor.submit(new Callable[Unit] { override def call(): Unit = PooledWriter.this.close() })
+    }
+  }
+
+  /** A runnable that attempts to drain items from all queues to their writers. */
+  private class Drainer extends Runnable {
+    override def run(): Unit = try {
+      while (!poolClosed.get()) {
+        writers.foreach { writer =>
+          try {
+            if (!writer.draining.getAndSet(true)) {
+              writer.drain()
+              writer.draining.set(false)
+            }
+          }
+          catch {
+            case t: Throwable => writer.throwable.set(t)
+          }
+        }
+      }
     }
   }
 
@@ -170,6 +182,7 @@ class AsyncWriterPool(threads: Int) extends Closeable {
     if (poolClosed.getAndSet(true)) throw new IllegalStateException("Pool already closed.")
     val futures = this.writers.iterator().toIndexedSeq.map { writer => writer.closeAsync() }
     this.executor.shutdown()
-    futures.foreach { f => f.get() }
+    try { futures.foreach(_.get()) }
+    catch { case exec: ExecutionException => throw exec.getCause }
   }
 }
