@@ -9,7 +9,7 @@ class CommonsModule(val crossScalaVersion: String) extends CrossSbtModule with P
   def millSourcePath = super.millSourcePath / ammonite.ops.up
   def artifactName = "commons"
   def gitHash = Process("git rev-parse --short HEAD").lineStream.head
-  def publishVersion = s"0.5.0-${gitHash}-SNAPSHOT"
+  def publishVersion = s"0.6.0-${gitHash}-SNAPSHOT"
 
   def pomSettings = PomSettings(
     description = artifactName(),
@@ -31,10 +31,10 @@ class CommonsModule(val crossScalaVersion: String) extends CrossSbtModule with P
     ivy"com.typesafe:config:1.3.2",
   )
   
-  object test extends Tests{
+  object test extends Tests {
     def ivyDeps = Agg(
       ivy"org.scalatest::scalatest:3.0.1"
     )
-    def testFramework ="org.scalatest.tools.Framework"
+    def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 }
