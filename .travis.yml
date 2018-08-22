@@ -1,24 +1,25 @@
 sudo: required
 language: scala
 scala:
-- 2.12.2
+  - 2.12.2
 jdk:
-- oraclejdk8
+  - oraclejdk8
 script:
-- sbt +clean coverage +test && sbt coverageReport coverageAggregate
-- find $HOME/.sbt -name "*.lock" | xargs rm
-- find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  - curl -L -o ~/bin/mill https://github.com/lihaoyi/mill/releases/download/0.2.6/0.2.6 && chmod +x ~/bin/mill
+  - export PATH=~/bin/mill:$PATH
+  - mill __.clean && mill __.test
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 cache:
   directories:
-  - "$HOME/.ivy2/cache"
-  - "$HOME/.sbt/boot/"
+    - "$HOME/.ivy2/cache"
+    - "$HOME/bin/mill"
 before_install:
-- pip install --user codecov
-- sudo chmod +x /usr/local/bin/sbt
+  - pip install --user codecov
+  - sudo chmod +x /usr/local/bin/sbt
 after_success:
 - codecov
 - test "$TRAVIS_REPO_SLUG" == 'fulcrumgenomics/commons' && test "$TRAVIS_PULL_REQUEST"
-  == 'false' && test "$TRAVIS_BRANCH" == 'master' && sbt +publish
+  == 'false' && test "$TRAVIS_BRANCH" == 'master' && mill __.publish --release true
 env:
   global:
   - secure: erKEtyVxyTgRQIrzva785xST9EhsYY+40SKhaHumIvXgfHtL6SppXCd213LXdwrKms23v/BZ43I5gOfEuX405FV1a8B7e+IGj1sG118MtlcVEyqSfuwGWtmsjhyWkvfHdyXzC8Aej5FpT9il74IdYJYVWW18UOh/q7cBI3duV5p9iooJG6IZ8zc1042+uKq4sfM9EnZEyCiffpVmqknRWZ47vlDEOiURYqccvJ0VN2P2mWSHTRMlXPGHuhy5KVMC/DIsZFbX2MaKMIT73hGMA8l6RS98ZSk7DkgrNr3hKy7P4YU9VyLRiz7S4MhCmS2L/NUEGI6V5Gouxpol+IX93IcpLp0ZgzYMfpnWfZyjTIx627cKKAsSOqoGteRFRArKwbag15u9lHltAu911PVa2bICZy0snr/CQx18++3hIPrKXLk5MnU4jQGOtZ1FbScPgEJBP2M6bUKHKPx2EJfQ5KtJgQtpv26LwLhrlJ+lRRQrirL0N3PAcciRtjGubAlB4ai9Qx6dVdJ84tlWMcgvZA2HExnK8uU6MK1biWBZevMrJ8qeb55CCaK5R7fZZJvAYKH9LIxt2YO2C8tVDEmPxjiZBp6jr9Ib+oiHU27PhUxzG1xK264tzp1LoBIewcUunbicDzqBPsQ60ByCaBhgin76E6+H+uxUY3tEnuIWX7c=
