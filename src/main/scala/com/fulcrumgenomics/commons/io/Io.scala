@@ -47,7 +47,10 @@ trait IoUtil {
   def bufferSize: Int = 32 * 1024
 
   /** Creates a new InputStream to read from the supplied path. */
-  def toInputStream(path: Path) : InputStream = new BufferedInputStream(Files.newInputStream(path), bufferSize)
+  def toInputStream(path: Path) : InputStream = {
+    val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
+    new BufferedInputStream(stream, bufferSize)
+  }
 
   /** Creates a new BufferedReader to read from the supplied path. */
   def toOutputStream(path: Path) : OutputStream = new BufferedOutputStream(Files.newOutputStream(path), bufferSize)
