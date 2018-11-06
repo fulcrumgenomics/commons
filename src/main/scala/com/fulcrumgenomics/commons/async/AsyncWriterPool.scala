@@ -58,7 +58,7 @@ class AsyncWriterPool(threads: Int) extends Closeable {
   private val executor   = Executors.newFixedThreadPool(threads)
   private val writers    = new CopyOnWriteArrayList[PooledWriter[_]]()
   private val poolClosed = new AtomicBoolean(false)
-  Range(0, threads).foreach(_ => executor.submit(new Drainer))
+  private val drainers   = Range(0, threads).map(_ => executor.submit(new Drainer))
 
   /**
     * Wraps a [[Writer[A]]] in the context of an [[AsyncWriterPool]] to provide asynchronous operations.
@@ -138,7 +138,13 @@ class AsyncWriterPool(threads: Int) extends Closeable {
             }
           }
           catch {
-            case t: Throwable => writer.throwable.set(t)
+            case t: Throwable =>
+              writer.throwable.set(t)
+              // The request to close the writer could have occurred before the throwable was set, so throw it just
+              // in case
+              if (writer.writerCloseRequested.get()) {
+                throw t
+              }
           }
         }
       }
@@ -182,7 +188,12 @@ class AsyncWriterPool(threads: Int) extends Closeable {
     if (poolClosed.getAndSet(true)) throw new IllegalStateException("Pool already closed.")
     val futures = this.writers.iterator().toIndexedSeq.map { writer => writer.closeAsync() }
     this.executor.shutdown()
-    try { futures.foreach(_.get()) }
+    try {
+      // wait until all the drainers have completed, since they may set exceptions on the writers
+      this.drainers.foreach(_.get())
+      // wait until all the writers have completed
+      futures.foreach(_.get())
+    }
     catch { case exec: ExecutionException => throw exec.getCause }
   }
 }
