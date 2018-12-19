@@ -79,7 +79,7 @@ object DelimitedDataParser {
     new DelimitedDataParser(Io.toSource(path).getLines(), delimiter=delimiter)
 
   /** Constructs a DelimitedDataParser for a path. */
-  def apply(lines: Traversable[String], delimiter: Char): DelimitedDataParser =
+  def apply(lines: TraversableOnce[String], delimiter: Char): DelimitedDataParser =
     new DelimitedDataParser(lines, delimiter=delimiter)
 }
 
