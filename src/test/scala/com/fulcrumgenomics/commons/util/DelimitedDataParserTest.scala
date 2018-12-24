@@ -148,6 +148,24 @@ class DelimitedDataParserTest extends UnitSpec {
     row3.get[Int]("c") shouldBe Some(3)
   }
 
+  it should "give the same results from apply[String] and string()" in {
+    val data = """
+      |foo,bar,splat
+      |one,uno,1
+      |two,dos ,2
+    """.stripMargin.trim.lines.filter(_.nonEmpty).toIndexedSeq
+    val parser = csv(data)
+    var rows = 0
+    parser.foreach { row =>
+      row[String]("foo")   shouldBe row.string("foo")
+      row[String]("bar")   shouldBe row.string("bar")
+      row[String]("splat") shouldBe row.string("splat")
+      rows += 1
+    }
+
+    rows shouldBe 2
+  }
+
   "DelimitedDataParser.getOrNone" should "return None if the column header does not exist" in {
     val parser = csv(Seq("a,b,c", "1,2,3"))
     val row = parser.next()
