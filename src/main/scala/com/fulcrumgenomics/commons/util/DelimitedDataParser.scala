@@ -36,7 +36,7 @@ import scala.reflect.runtime.{universe => ru}
   */
 class Row private[util] (private val headerIndices: Map[String,Int], private val fields: Array[String], val trim: Boolean) {
   /* Internal method to pull a value out of the field array by index and trim it if requested. */
-  private def value(index: Int) = {
+  private def value(index: Int): String = {
     if (index > fields.length-1) throw new IndexOutOfBoundsException(s"Invalid column index supplied: ${index}")
     val string = fields(index)
     if (trim) string.trim else string
@@ -50,6 +50,12 @@ class Row private[util] (private val headerIndices: Map[String,Int], private val
 
   /** Fetches a value of the desired type by column name. */
   def apply[A](column: String)(implicit tag: ru.TypeTag[A]): A = apply(headerIndices(column))
+
+  /** Non-type-parameterized apply method that returns the column value as a String. */
+  def string(column: String): String = value(headerIndices(column))
+
+  /** Non-type-parameterized apply method that returns the column value as a String. */
+  def string(index: Int): String = value(index)
 
   /** Gets a value from the column with the specified index. If the value is null or empty returns None. */
   def get[A](index: Int)(implicit tag: ru.TypeTag[A]): Option[A] = {
