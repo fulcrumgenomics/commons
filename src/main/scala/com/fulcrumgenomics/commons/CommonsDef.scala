@@ -25,13 +25,11 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
-import java.util.Comparator
 
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.{LinearSeq, LinearSeqOptimized, Parallelizable, SeqLike}
+import scala.collection.Parallelizable
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterableLike, TaskSupport}
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.language.implicitConversions
@@ -372,9 +370,9 @@ class CommonsDef {
   }
 
 
-  /////////////////////////////////////////////////////////////////////////////
-  // Path-like typedefs that are used to hint at what the Path should be to
-  /////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
+  // Path or String-like type definitions that hint at what the path or string are used for.
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   /** Represents a path to a BAM (or SAM or CRAM) file. */
   type PathToBam = java.nio.file.Path
@@ -402,6 +400,9 @@ class CommonsDef {
 
   /** A String that represents the prefix or basename of a filename. */
   type FilenamePrefix = String
+
+  /** A String that represents the suffix of a filename, often of the form ".<extension>". */
+  type FilenameSuffix = String
 }
 
 /** A singleton object providing access to all the functionality of CommonsDef. */
