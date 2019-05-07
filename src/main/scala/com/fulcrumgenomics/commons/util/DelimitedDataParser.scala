@@ -82,17 +82,17 @@ object DelimitedDataParser {
 
   /** Constructs a DelimitedDataParser for a path. */
   def apply(path: FilePath, delimiter: Char): DelimitedDataParser =
-    new DelimitedDataParser(Io.toSource(path).getLines(), delimiter=delimiter)
+    apply(Io.toSource(path).getLines(), delimiter=delimiter, header=Seq.empty)
 
   /** Constructs a DelimitedDataParser for a path. */
   def apply(path: FilePath, delimiter: Char, header: Seq[String]): DelimitedDataParser =
     new DelimitedDataParser(Io.toSource(path).getLines(), delimiter=delimiter, header=header)
 
-  /** Constructs a DelimitedDataParser for a path. */
+  /** Constructs a DelimitedDataParser for a sequence of lines. */
   def apply(lines: TraversableOnce[String], delimiter: Char): DelimitedDataParser =
-    new DelimitedDataParser(lines, delimiter=delimiter)
+    apply(lines, delimiter=delimiter, header=Seq.empty)
 
-  /** Constructs a DelimitedDataParser for a path. */
+  /** Constructs a DelimitedDataParser for a sequence of lines. */
   def apply(lines: TraversableOnce[String], delimiter: Char, header: Seq[String]): DelimitedDataParser =
     new DelimitedDataParser(lines, delimiter=delimiter, header=header)
 }

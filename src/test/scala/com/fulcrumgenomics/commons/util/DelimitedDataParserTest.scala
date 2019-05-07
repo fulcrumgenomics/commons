@@ -26,9 +26,10 @@ package com.fulcrumgenomics.commons.util
 
 import com.fulcrumgenomics.commons.CommonsDef._
 import com.fulcrumgenomics.commons.io.Io
+
 /** Tests for the delimited data parser. */
 class DelimitedDataParserTest extends UnitSpec {
-  private lazy val csvFile: FilePath = {
+  private val csvFile: FilePath = {
     val tempFile = Io.makeTempFile("data", ".csv")
     Io.writeLines(tempFile, Seq("zero,one,two", "0,1,2"))
     tempFile
