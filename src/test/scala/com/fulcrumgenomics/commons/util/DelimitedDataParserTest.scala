@@ -25,10 +25,16 @@
 package com.fulcrumgenomics.commons.util
 
 import com.fulcrumgenomics.commons.CommonsDef._
-
+import com.fulcrumgenomics.commons.io.Io
 /** Tests for the delimited data parser. */
 class DelimitedDataParserTest extends UnitSpec {
-  def csv(lines: Seq[String], trim: Boolean=true) = new DelimitedDataParser(lines, delimiter=',', trimFields=trim)
+  private lazy val csvFile: FilePath = {
+    val tempFile = Io.makeTempFile("data", ".csv")
+    Io.writeLines(tempFile, Seq("zero,one,two", "0,1,2"))
+    tempFile
+  }
+
+  private def csv(lines: Seq[String], trim: Boolean=true) = new DelimitedDataParser(lines, delimiter=',', trimFields=trim)
 
   "DelimitedDataParser.split" should "split this" in {
     val parser = csv(Seq("a,b,c,d"))
@@ -137,7 +143,6 @@ class DelimitedDataParserTest extends UnitSpec {
     row2.get[String]("a") shouldBe None
     row2.get[String]("b") shouldBe None
     row2.get[String]("c") shouldBe None
-
   }
 
   it should "read present and absent values correctly using get()" in {
@@ -175,6 +180,27 @@ class DelimitedDataParserTest extends UnitSpec {
     }
 
     rows shouldBe 2
+  }
+
+  it should "read data from a file path" in {
+    val parser = DelimitedDataParser(csvFile, delimiter = ',')
+    val row = parser.next()
+    row[Int]("zero") shouldBe 0
+    row[Int]("one")  shouldBe 1
+    row[Int]("two")  shouldBe 2
+  }
+
+  it should "read data from a file path with a custom header" in {
+    val parser = DelimitedDataParser(csvFile, delimiter = ',', header = Seq("col1", "col2", "col3"))
+    val row = parser.next()
+    row[String]("col1") shouldBe "zero"
+    row[String]("col2") shouldBe "one"
+    row[String]("col3") shouldBe "two"
+
+    val row2 = parser.next()
+    row2[Int]("col1") shouldBe 0
+    row2[Int]("col2") shouldBe 1
+    row2[Int]("col3") shouldBe 2
   }
 
   "DelimitedDataParser.getOrNone" should "return None if the column header does not exist" in {
