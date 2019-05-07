@@ -71,6 +71,17 @@ class DelimitedDataParserTest extends UnitSpec {
     csv(Seq("", "")).hasNext shouldBe false // blank lines are suppressed by default
   }
 
+  it should "work with a user-defined list of header names" in {
+    val parser = DelimitedDataParser(lines=Seq("1.0,2.0", "1.1,2.1"), delimiter=',', header=Seq("x", "y"))
+    val row = parser.next()
+    row[Double]("x") shouldBe 1.0
+    row[Double]("y") shouldBe 2.0
+
+    val row2 = parser.next()
+    row2.string("x") shouldBe "1.1"
+    row2.string("y") shouldBe "2.1"
+  }
+
   it should "report the set of header fields" in {
     csv(Seq("foo,bar,splat ")).headers should contain theSameElementsInOrderAs Seq("foo", "bar", "splat")
   }
