@@ -86,7 +86,7 @@ object DelimitedDataParser {
 
   /** Constructs a DelimitedDataParser for a path. */
   def apply(path: FilePath, delimiter: Char, header: Seq[String]): DelimitedDataParser =
-    new DelimitedDataParser(Io.toSource(path).getLines(), delimiter=delimiter, header=header)
+    apply(Io.toSource(path).getLines(), delimiter=delimiter, header=header)
 
   /** Constructs a DelimitedDataParser for a sequence of lines. */
   def apply(lines: TraversableOnce[String], delimiter: Char): DelimitedDataParser =
@@ -104,7 +104,7 @@ object DelimitedDataParser {
   * @param delimiter the delimiter between columns
   * @param ignoreBlankLines whether blank lines should be ignored
   * @param trimFields whether individual fields should have their String values trimmed
-  * @param header the header names for the columns of delimited data
+  * @param header the header names for the columns of delimited data. If empty, the first line should contain the header names.
   */
 class DelimitedDataParser(lines: TraversableOnce[String],
                           val delimiter: Char,
