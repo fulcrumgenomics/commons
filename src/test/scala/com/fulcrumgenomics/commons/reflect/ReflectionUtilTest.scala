@@ -61,6 +61,42 @@ object ReflectionUtilTest {
 object UsingCompanion { def apply(s: String): UsingCompanion = new UsingCompanion(s.toInt)}
 case class UsingCompanion(x: Int)
 
+/** Sealed-trait hierarchy with no companion */
+sealed trait NoCompanion
+case object ANoCompanion extends NoCompanion
+case object BNoCompanion extends NoCompanion
+case object CNoCompanion extends NoCompanion
+
+/** Sealed-trait hierarchy with a companion but neither a `values` nor a `findValues` method */
+sealed trait EmptyCompanion
+case object AEmptyCompanion extends EmptyCompanion
+case object BEmptyCompanion extends EmptyCompanion
+case object CEmptyCompanion extends EmptyCompanion
+object NoCompanion
+
+/** Sealed-trait hierarchy where `values` returns the values in the order the case objects they were declared */
+sealed trait CompanionWithValues
+case object ACompanionWithValues extends CompanionWithValues
+case object BCompanionWithValues extends CompanionWithValues
+case object CCompanionWithValues extends CompanionWithValues
+object CompanionWithValues {
+  def values: Seq[CompanionWithValues] = Seq(ACompanionWithValues, BCompanionWithValues, CCompanionWithValues)
+}
+
+/** Sealed-trait hierarchy where `findValues` returns the values in a different order than the case objects they were declared */
+sealed trait CompanionWithFindValues
+case object ACompanionWithFindValues extends CompanionWithFindValues
+case object BCompanionWithFindValues extends CompanionWithFindValues
+case object CCompanionWithFindValues extends CompanionWithFindValues
+object CompanionWithFindValues {
+  def findValues: Seq[CompanionWithFindValues] = Seq(BCompanionWithFindValues, ACompanionWithFindValues, CCompanionWithFindValues)
+}
+
+sealed trait CaseClasses
+case class ACaseClass(s: String) extends CaseClasses
+case class BCaseClass(s: String) extends CaseClasses
+case class CCaseClass(s: String) extends CaseClasses
+
 /** Tests for many of the methods in ReflectionUtil.  More tests in other classes below! */
 class ReflectionUtilTest extends UnitSpec {
   val mirror: ru.Mirror = ru.runtimeMirror(getClass.getClassLoader)
@@ -356,8 +392,22 @@ class ReflectionUtilTest extends UnitSpec {
   }
 
   it should "fail when there are no options for an enum" in {
-    val options = ReflectionUtil.enumOptions(classOf[BadEnum])
-    options shouldBe 'failure
+    ReflectionUtil.enumOptions(classOf[BadEnum]) shouldBe 'failure
+  }
+
+  "ReflectionUtil.sealedTraitOptions" should "find the possible values in a sealed trait/case object hierarchy with a values method" in {
+    ReflectionUtil.sealedTraitOptions(classOf[NoCompanion]).get should contain theSameElementsInOrderAs Seq(ANoCompanion, BNoCompanion, CNoCompanion)
+    ReflectionUtil.sealedTraitOptions(classOf[EmptyCompanion]).get should contain theSameElementsInOrderAs Seq(AEmptyCompanion, BEmptyCompanion, CEmptyCompanion)
+    ReflectionUtil.sealedTraitOptions(classOf[CompanionWithValues]).get should contain theSameElementsInOrderAs CompanionWithValues.values
+    ReflectionUtil.sealedTraitOptions(classOf[CompanionWithFindValues]).get should contain theSameElementsInOrderAs CompanionWithFindValues.findValues
+  }
+
+  it should "fail when the class is not a sealed trait" in {
+    ReflectionUtil.sealedTraitOptions(classOf[GoodEnum]) shouldBe 'failure
+  }
+
+  it should "fail when the sub-classes are not case objects" in {
+    ReflectionUtil.sealedTraitOptions(classOf[CaseClasses]) shouldBe 'failure
   }
 
   "ReflectionUtil.buildUnitFromString" should "throw an Exception when an unknown enum value is given" in {
