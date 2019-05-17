@@ -25,10 +25,17 @@
 package com.fulcrumgenomics.commons.util
 
 import com.fulcrumgenomics.commons.CommonsDef._
+import com.fulcrumgenomics.commons.io.Io
 
 /** Tests for the delimited data parser. */
 class DelimitedDataParserTest extends UnitSpec {
-  def csv(lines: Seq[String], trim: Boolean=true) = new DelimitedDataParser(lines, delimiter=',', trimFields=trim)
+  private val csvFile: FilePath = {
+    val tempFile = Io.makeTempFile("data", ".csv")
+    Io.writeLines(tempFile, Seq("zero,one,two", "0,1,2"))
+    tempFile
+  }
+
+  private def csv(lines: Seq[String], trim: Boolean=true) = new DelimitedDataParser(lines, delimiter=',', trimFields=trim)
 
   "DelimitedDataParser.split" should "split this" in {
     val parser = csv(Seq("a,b,c,d"))
@@ -69,6 +76,17 @@ class DelimitedDataParserTest extends UnitSpec {
   it should "parse an empty set of lines" in {
     csv(Seq.empty[String]).hasNext shouldBe false
     csv(Seq("", "")).hasNext shouldBe false // blank lines are suppressed by default
+  }
+
+  it should "work with a user-defined list of header names" in {
+    val parser = DelimitedDataParser(lines=Seq("1.0,2.0", "1.1,2.1"), delimiter=',', header=Seq("x", "y"))
+    val row = parser.next()
+    row[Double]("x") shouldBe 1.0
+    row[Double]("y") shouldBe 2.0
+
+    val row2 = parser.next()
+    row2.string("x") shouldBe "1.1"
+    row2.string("y") shouldBe "2.1"
   }
 
   it should "report the set of header fields" in {
@@ -126,7 +144,6 @@ class DelimitedDataParserTest extends UnitSpec {
     row2.get[String]("a") shouldBe None
     row2.get[String]("b") shouldBe None
     row2.get[String]("c") shouldBe None
-
   }
 
   it should "read present and absent values correctly using get()" in {
@@ -164,6 +181,27 @@ class DelimitedDataParserTest extends UnitSpec {
     }
 
     rows shouldBe 2
+  }
+
+  it should "read data from a file path" in {
+    val parser = DelimitedDataParser(csvFile, delimiter = ',')
+    val row = parser.next()
+    row[Int]("zero") shouldBe 0
+    row[Int]("one")  shouldBe 1
+    row[Int]("two")  shouldBe 2
+  }
+
+  it should "read data from a file path with a custom header" in {
+    val parser = DelimitedDataParser(csvFile, delimiter = ',', header = Seq("col1", "col2", "col3"))
+    val row = parser.next()
+    row[String]("col1") shouldBe "zero"
+    row[String]("col2") shouldBe "one"
+    row[String]("col3") shouldBe "two"
+
+    val row2 = parser.next()
+    row2[Int]("col1") shouldBe 0
+    row2[Int]("col2") shouldBe 1
+    row2[Int]("col3") shouldBe 2
   }
 
   "DelimitedDataParser.getOrNone" should "return None if the column header does not exist" in {

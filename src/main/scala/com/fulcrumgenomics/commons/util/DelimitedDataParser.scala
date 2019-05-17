@@ -82,11 +82,19 @@ object DelimitedDataParser {
 
   /** Constructs a DelimitedDataParser for a path. */
   def apply(path: FilePath, delimiter: Char): DelimitedDataParser =
-    new DelimitedDataParser(Io.toSource(path).getLines(), delimiter=delimiter)
+    apply(Io.toSource(path).getLines(), delimiter=delimiter, header=Seq.empty)
 
   /** Constructs a DelimitedDataParser for a path. */
+  def apply(path: FilePath, delimiter: Char, header: Seq[String]): DelimitedDataParser =
+    apply(Io.toSource(path).getLines(), delimiter=delimiter, header=header)
+
+  /** Constructs a DelimitedDataParser for a sequence of lines. */
   def apply(lines: TraversableOnce[String], delimiter: Char): DelimitedDataParser =
-    new DelimitedDataParser(lines, delimiter=delimiter)
+    apply(lines, delimiter=delimiter, header=Seq.empty)
+
+  /** Constructs a DelimitedDataParser for a sequence of lines. */
+  def apply(lines: TraversableOnce[String], delimiter: Char, header: Seq[String]): DelimitedDataParser =
+    new DelimitedDataParser(lines, delimiter=delimiter, header=header)
 }
 
 /**
@@ -96,17 +104,20 @@ object DelimitedDataParser {
   * @param delimiter the delimiter between columns
   * @param ignoreBlankLines whether blank lines should be ignored
   * @param trimFields whether individual fields should have their String values trimmed
+  * @param header the header names for the columns of delimited data. If empty, the first line should contain the header names.
   */
 class DelimitedDataParser(lines: TraversableOnce[String],
                           val delimiter: Char,
                           val ignoreBlankLines: Boolean = DelimitedDataParser.DefaultBlankPolicy,
-                          val trimFields: Boolean = DelimitedDataParser.DefaultTrim) extends Iterator[Row] with LazyLogging {
+                          val trimFields: Boolean = DelimitedDataParser.DefaultTrim,
+                          val header: Seq[String] = Seq.empty) extends Iterator[Row] with LazyLogging {
 
   private val _lines = if (ignoreBlankLines) lines.toIterator.filter(_.nonEmpty) else lines.toIterator
 
   // An array of the headers
   private val _headers = {
-    if (this._lines.hasNext) this._lines.next().split(delimiter).map(h => if (trimFields) h.trim else h).toIndexedSeq
+    if (header.nonEmpty) header.toIndexedSeq
+    else if (this._lines.hasNext) this._lines.next().split(delimiter).map(h => if (trimFields) h.trim else h).toIndexedSeq
     else IndexedSeq.empty
   }
 
