@@ -15,17 +15,10 @@ object commons extends SbtModule with ScoverageModule with PublishModule {
   def publishVersion = s"0.6.0-${gitHash}-SNAPSHOT"
   def scalaVersion = "2.12.8"
   def scoverageVersion = "1.3.1"
+  def scalacOptions = Seq("-target:jvm-1.8", "-deprecation", "-unchecked")
 
-  // Build options
-  // TODO: Seq("-target:jvm-1.8", "-deprecation", "-unchecked"),
-  // TODO: start year 2015
-  // TODO: organizationHomepage := Some(url("http://www.fulcrumgenomics.com")),
-  // TODO: testOptions in Test  += Tests.Argument(TestFrameworks.ScalaTest, "-h", Option(System.getenv("TEST_HTML_REPORTS")).getOrElse(htmlReportsDirectory)),
-  // TODO: testOptions in Test  += Tests.Argument("-l", "LongRunningTest"), // ignores long running tests
-  // TODO
-  // - sonatype: http://www.lihaoyi.com/mill/page/common-project-layouts.html#publishing
-  // - name the output assembly JAR
-
+  // TODO: start year (2015)
+  // TODO: organization homepage ("http://www.fulcrumgenomics.com")
   def pomSettings = PomSettings(
     description = artifactName(),
     organization = "com.fulcrumgenomics",
@@ -46,7 +39,14 @@ object commons extends SbtModule with ScoverageModule with PublishModule {
     ivy"com.typesafe:config:1.3.2",
   )
 
-  object test extends ScoverageTests {
+  // TODO: ignore long running tests with "-l LongRunningTest"
+  object test extends Tests {
+    def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.5")
+    def testFrameworks = Seq("org.scalatest.tools.Framework")
+  }
+
+  object coverage extends ScoverageTests {
+    def moduleDeps = Seq(commons.test)
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.5")
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
@@ -57,5 +57,5 @@ object commons extends SbtModule with ScoverageModule with PublishModule {
     cp.over(assembly.path, pwd / 'jars / jarName)
   }
 
-  def assemblyJar = T { deployJar(assembly(), "commons.jar") }
+  def assemblyJar = T { deployJar(assembly(), s"commons-${publishVersion()}.jar") }
 }
