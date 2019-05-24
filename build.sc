@@ -8,7 +8,7 @@ import ammonite.ops._
 
 import scala.sys.process.Process
 
-object commons extends SbtModule with ScoverageModule with PublishModule {
+object commons extends SbtModule with ScoverageModule with PublishModule { outer =>
   def millSourcePath = super.millSourcePath / ammonite.ops.up
   def artifactName = "commons"
   def gitHash = Process("git rev-parse --short HEAD").lineStream.head
@@ -46,9 +46,18 @@ object commons extends SbtModule with ScoverageModule with PublishModule {
   }
 
   object coverage extends ScoverageTests {
-    def moduleDeps = Seq(commons.test)
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.5")
     def testFrameworks = Seq("org.scalatest.tools.Framework")
+
+    // See: https://github.com/lihaoyi/mill/blob/master/scalalib/src/MiscModule.scala#L66-L77
+    override def millSourcePath = outer.millSourcePath
+    override def intellijModulePath = outer.millSourcePath / 'src / 'test
+    override def sources = T.sources(
+      millSourcePath / 'src / 'test / 'scala,
+      millSourcePath / 'src / 'test / 'java
+    )
+    override def resources = T.sources{ millSourcePath / 'src / 'test / 'resources }
+
   }
 
   private def deployJar(assembly: PathRef, jarName:String) = {
