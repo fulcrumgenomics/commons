@@ -29,7 +29,7 @@ import java.nio.file.Path
 import com.fulcrumgenomics.commons.io.PathUtil
 import com.fulcrumgenomics.commons.CommonsDef._
 
-import scala.annotation.ClassfileAnnotation
+import scala.annotation.{ClassfileAnnotation, tailrec}
 import scala.collection.mutable
 import scala.reflect._
 import scala.reflect.runtime.universe._
@@ -467,8 +467,13 @@ object ReflectionUtil {
     }
 
     companionValues.map { values => copy(values.toArray, clazz).toSeq }.getOrElse {
-      // Default to the direct sub-classes of the trait
-      symbol.knownDirectSubclasses.map { subSymbol =>
+      // Get all concrete sub-classes
+      def getAllConcreteSubClasses(symbol: ru.ClassSymbol): Set[ru.ClassSymbol] = {
+        if (!symbol.asClass.isAbstract) Set(symbol)
+        else symbol.knownDirectSubclasses.flatMap { subSymbol: ru.Symbol => getAllConcreteSubClasses(subSymbol.asClass) }
+      }
+
+      getAllConcreteSubClasses(symbol).map { subSymbol =>
          // get an instance of the companion object
          try { mirror.runtimeClass(subSymbol.asClass).getField("MODULE$").get(null).asInstanceOf[T] }
          catch { case ex: java.lang.NoSuchFieldException =>

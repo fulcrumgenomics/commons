@@ -97,6 +97,19 @@ case class ACaseClass(s: String) extends CaseClasses
 case class BCaseClass(s: String) extends CaseClasses
 case class CCaseClass(s: String) extends CaseClasses
 
+sealed trait CompanionWithNestedObjects
+object CompanionWithNestedObjects {
+  case object ACompanionWithNestedObjects extends CompanionWithNestedObjects
+  case object BCompanionWithNestedObjects extends CompanionWithNestedObjects
+  case object CCompanionWithNestedObjects extends CompanionWithNestedObjects
+}
+
+sealed trait BaseTrait
+sealed trait LeftTrait extends BaseTrait
+sealed trait RightTrait extends BaseTrait
+case object LeftObject extends LeftTrait
+case object RightObject extends RightTrait
+
 /** Tests for many of the methods in ReflectionUtil.  More tests in other classes below! */
 class ReflectionUtilTest extends UnitSpec {
   val mirror: ru.Mirror = ru.runtimeMirror(getClass.getClassLoader)
@@ -400,6 +413,9 @@ class ReflectionUtilTest extends UnitSpec {
     ReflectionUtil.sealedTraitOptions(classOf[EmptyCompanion]).get should contain theSameElementsInOrderAs Seq(AEmptyCompanion, BEmptyCompanion, CEmptyCompanion)
     ReflectionUtil.sealedTraitOptions(classOf[CompanionWithValues]).get should contain theSameElementsInOrderAs CompanionWithValues.values
     ReflectionUtil.sealedTraitOptions(classOf[CompanionWithFindValues]).get should contain theSameElementsInOrderAs CompanionWithFindValues.findValues
+    ReflectionUtil.sealedTraitOptions(classOf[CompanionWithNestedObjects]).get should contain theSameElementsInOrderAs
+      Seq(CompanionWithNestedObjects.ACompanionWithNestedObjects, CompanionWithNestedObjects.BCompanionWithNestedObjects, CompanionWithNestedObjects.CCompanionWithNestedObjects)
+    ReflectionUtil.sealedTraitOptions(classOf[BaseTrait]).get should contain theSameElementsInOrderAs Seq(LeftObject, RightObject)
   }
 
   it should "fail when the class is not a sealed trait" in {
