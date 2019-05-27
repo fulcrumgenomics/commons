@@ -35,7 +35,7 @@ import scala.collection.mutable
   */
 class AsyncStreamSinkTest extends UnitSpec {
   "AsyncStreamSink" should "capture all the output" in {
-    val file = Paths.get("src/test/resources/com/fulcrumgenomics/commons/io/async-stream-sink-test.txt")
+    val file = Paths.get("commons/test/resources/com/fulcrumgenomics/commons/io/async-stream-sink-test.txt")
     val expected = Io.toSource(file).getLines().toList
 
     val proc = new ProcessBuilder("cat", file.toString).start()

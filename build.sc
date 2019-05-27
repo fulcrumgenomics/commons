@@ -1,15 +1,16 @@
-import $ivy.`com.lihaoyi::mill-contrib-buildinfo:0.4.0`
+// FIXME: change to a release version of mill
+// FIXME: for now, this has to match the latest development version of mill seen here:
+// FIXME: https://github.com/lihaoyi/mill/pull/618
+import $ivy.`com.lihaoyi::mill-contrib-buildinfo:0.2.8-199-de4d5b`
 import mill.contrib.scoverage.ScoverageModule
 
-import mill.Cross
-import mill.scalalib.{SbtModule, PublishModule, Dep, CrossSbtModule, DepSyntax}
+import mill.scalalib.{PublishModule, Dep, DepSyntax, ScalaModule}
 import mill.scalalib.publish.{PomSettings, License, Developer, SCM}
 import ammonite.ops._
 
 import scala.sys.process.Process
 
-object commons extends SbtModule with ScoverageModule with PublishModule {
-  def millSourcePath = super.millSourcePath / ammonite.ops.up
+object commons extends ScalaModule with ScoverageModule with PublishModule {
   def artifactName = "commons"
   def gitHash = Process("git rev-parse --short HEAD").lineStream.head
   def publishVersion = s"0.6.0-${gitHash}-SNAPSHOT"
@@ -36,17 +37,11 @@ object commons extends SbtModule with ScoverageModule with PublishModule {
 
   def ivyDeps = Agg(
     ivy"org.scala-lang:scala-compiler:${scalaVersion()}",
-    ivy"com.typesafe:config:1.3.2",
+    ivy"com.typesafe:config:1.3.2"
   )
 
   // TODO: ignore long running tests with "-l LongRunningTest"
-  object test extends Tests {
-    def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.5")
-    def testFrameworks = Seq("org.scalatest.tools.Framework")
-  }
-
-  object coverage extends ScoverageTests {
-    def moduleDeps = Seq(commons.test)
+  object test extends ScoverageTests {
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.5")
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }

@@ -7,7 +7,7 @@ jdk:
 script:
   - curl -L -o ~/bin/mill https://github.com/lihaoyi/mill/releases/download/0.2.6/0.2.6 && chmod +x ~/bin/mill
   - export PATH=~/bin/mill:$PATH
-  - mill __.clean && mill __.test && mill __.scoverage.htmlReport 
+  - mill __.clean && mill __.test && mill __.scoverage.xmlReport 
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 cache:
   directories:
