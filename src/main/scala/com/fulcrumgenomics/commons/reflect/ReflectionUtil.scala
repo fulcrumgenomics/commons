@@ -29,7 +29,7 @@ import java.nio.file.Path
 import com.fulcrumgenomics.commons.io.PathUtil
 import com.fulcrumgenomics.commons.CommonsDef._
 
-import scala.annotation.ClassfileAnnotation
+import scala.annotation.{ClassfileAnnotation, tailrec}
 import scala.collection.mutable
 import scala.reflect._
 import scala.reflect.runtime.universe._
@@ -423,8 +423,7 @@ object ReflectionUtil {
     */
   private def plural(x: Int) = if (x > 1) "s" else ""
 
-  /** Gets all the options for an enumeration.
-    */
+  /** Gets all the options for an enumeration. */
   def enumOptions(clazz: Class[_ <: Enum[_ <: Enum[_]]]): Try[Seq[Enum[_ <: Enum[_]]]] = Try {
     // We assume that clazz is guaranteed to be a Class<? extends Enum>, thus
     // getEnumConstants() won't ever return a null.
@@ -433,5 +432,54 @@ object ReflectionUtil {
       throw new ReflectionException(s"Bad enum type '${clazz.getName}' with no options")
     }
     enumConstants
+  }
+
+  /** Returns the direct sub-classes of the given trait.  The sub-classes must be case objects.
+    *
+    * The order of the sub-classes returned is determined as follows.  First, search the companion of the trait for a
+    * `values` or `findValues` method, that returns the values in the desired order for the sealed trait hierarchy.
+    * Otherwise the direct sub-classes of the trait are returned.
+    */
+  def sealedTraitOptions[T](clazz: Class[T])(implicit evidence: ClassTag[T]): Try[Seq[T]] = Try {
+    val symbol = mirror.classSymbol(clazz)
+
+    // double-check it's a sealed trait!
+    require(symbol.isTrait && symbol.isSealed, f"Class '${clazz.getName}' is not a sealed trait")
+
+    // Get the companion
+    val companion = Try {
+      val companionObject = symbol.companion.asModule
+      val companionMirror = mirror.reflectModule(companionObject)
+      companionMirror.instance
+    }
+
+    // Get the values from the companion if possible
+    val companionValues: Option[Seq[Any]] = companion match {
+      case Failure(_) => None
+      case Success(_companion) =>
+        Iterator("values", "findValues").map { name =>
+          Try { _companion.getClass.getMethod(name).invoke(_companion).asInstanceOf[Seq[Any]] } }
+          .map {
+            case Success(_values) => _values
+            case Failure(_)       => Seq.empty[Any]
+          }
+          .find(_.nonEmpty)
+    }
+
+    companionValues.map { values => copy(values.toArray, clazz).toSeq }.getOrElse {
+      // Get all concrete sub-classes
+      def getAllConcreteSubClasses(symbol: ru.ClassSymbol): Set[ru.ClassSymbol] = {
+        if (!symbol.asClass.isAbstract) Set(symbol)
+        else symbol.knownDirectSubclasses.flatMap { subSymbol: ru.Symbol => getAllConcreteSubClasses(subSymbol.asClass) }
+      }
+
+      getAllConcreteSubClasses(symbol).map { subSymbol =>
+         // get an instance of the companion object
+         try { mirror.runtimeClass(subSymbol.asClass).getField("MODULE$").get(null).asInstanceOf[T] }
+         catch { case ex: java.lang.NoSuchFieldException =>
+           throw new IllegalArgumentException(s"Class '${subSymbol.name}' is not a case object.", ex)
+         }
+       }.toSeq
+    }
   }
 }
