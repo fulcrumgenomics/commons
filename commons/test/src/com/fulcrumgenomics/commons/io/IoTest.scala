@@ -166,7 +166,7 @@ class IoTest extends UnitSpec {
   }
 
   // The expected lines from the file loaded as a resource
-  private val ResourceLines = Io.readLines(Paths.get("src/test/resources/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt")).toList
+  private val ResourceLines = Io.readLines(Paths.get("commons/test/resources/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt")).toList
 
   "Io.readLinesFromResource" should "read lines from a resource" in {
     val actual = Io.readLinesFromResource("/com/fulcrumgenomics/commons/io/to-lines-from-resource-test.txt").toList
