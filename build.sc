@@ -13,7 +13,7 @@ import scala.sys.process.Process
 object commons extends ScalaModule with ScoverageModule with PublishModule {
   def artifactName = "commons"
   def gitHash = os.proc("git", "rev-parse", "--short", "HEAD").call().out.trim
-  def publishVersion = s"0.6.0-${gitHash}-SNAPSHOT"
+  def publishVersion = s"0.8.0-${gitHash}-SNAPSHOT"
   def scalaVersion = "2.12.8"
   def scoverageVersion = "1.3.1"
   def scalacOptions = Seq("-target:jvm-1.8", "-deprecation", "-unchecked")
