@@ -13,9 +13,8 @@ cache:
     - "$HOME/bin/mill"
 before_install:
   - pip install --user codecov
-  - curl -L -o ~/bin/mill https://github.com/lihaoyi/mill/releases/download/0.4.0/0.4.0-9-1db2ee
-  - chmod +x ~/bin/mill
-  - export PATH=~/bin/mill:$PATH
+  - curl -L -o /usr/local/bin/mill https://github.com/lihaoyi/mill/releases/download/0.4.0/0.4.0-9-1db2ee
+  - chmod +x /usr/local/bin/mill
 after_success:
 - codecov
 - test "$TRAVIS_REPO_SLUG" == 'fulcrumgenomics/commons' && test "$TRAVIS_PULL_REQUEST"
