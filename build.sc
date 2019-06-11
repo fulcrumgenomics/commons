@@ -1,7 +1,7 @@
-// FIXME: change to a release version of mill
-// FIXME: for now, this has to match the latest development version of mill seen here:
-// FIXME: https://github.com/lihaoyi/mill/pull/618
-import $ivy.`com.lihaoyi::mill-contrib-buildinfo:0.2.8-199-de4d5b`
+// IMPORTANT: the version of the contrib modules must be 0.4.0-9-1db2ee or later.
+// IMPORTANT: if you change this version to a release, please update the .travis.yml
+// FIXME: change to a release version after 0.4.0-9-1db2ee
+import $ivy.`com.lihaoyi::mill-contrib-buildinfo:0.4.0-9-1db2ee`
 import mill.contrib.scoverage.ScoverageModule
 
 import mill.scalalib.{PublishModule, Dep, DepSyntax, ScalaModule}
