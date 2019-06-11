@@ -5,9 +5,6 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - curl -L -o ~/bin/mill https://github.com/lihaoyi/mill/releases/download/0.4.0/0.4.0-9-1db2ee
-  - chmod +x ~/bin/mill
-  - export PATH=~/bin/mill:$PATH
   - mill __.clean && mill __.test && mill __.scoverage.xmlReport 
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 cache:
@@ -16,7 +13,9 @@ cache:
     - "$HOME/bin/mill"
 before_install:
   - pip install --user codecov
-  - sudo chmod +x /usr/local/bin/sbt
+  - curl -L -o ~/bin/mill https://github.com/lihaoyi/mill/releases/download/0.4.0/0.4.0-9-1db2ee
+  - chmod +x ~/bin/mill
+  - export PATH=~/bin/mill:$PATH
 after_success:
 - codecov
 - test "$TRAVIS_REPO_SLUG" == 'fulcrumgenomics/commons' && test "$TRAVIS_PULL_REQUEST"
