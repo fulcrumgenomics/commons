@@ -28,9 +28,9 @@ import java.nio.file.{Files, Path}
 
 import com.fulcrumgenomics.commons.util.LazyLogging
 
+import scala.collection.mutable
 import scala.io.Source
-
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 trait CommandLineTool extends LazyLogging {
   /** The name of the executable such as Rscript or gs. */
@@ -44,37 +44,26 @@ trait CommandLineTool extends LazyLogging {
     override def getMessage: String = s"$Executable failed with exit code $status."
   }
 
-
   /** Returns a tuple of (Boolean, String): first element is true when command can execute
-    *  with no error; second element is a string of command stdout */
-  def execArgs(command: String*):(Boolean, String) = {
+    * with no error; second element is a string of command stdout */
+  def execArgs(command: String*): (Boolean, String) = {
     try {
-      // Create temp file for storing stdout result
-      val output = Files.createTempFile("output.", ".txt")
-      output.toFile.deleteOnExit()
-
-      // Redirect stdout to the temp file & start process
-      val process = new ProcessBuilder(command: _*)
-        .redirectErrorStream(true)
-        .redirectOutput(output.toFile)
-        .start()
-
-      // True if the command can execute with no error
-      val canExecute: Boolean = process.waitFor() == 0
-
       // Read redirected stdout to a string
-      val bufferedSource      = Source.fromFile(output.toString)
-      val lines: String       = bufferedSource.getLines().mkString
-      bufferedSource.close()
+      val process = new ProcessBuilder(command: _*).redirectErrorStream(true).start()
+      val stdout  = mutable.ListBuffer[String]()
+      val sink    = new AsyncStreamSink(process.getInputStream, s => stdout.append(s))
+      // True if the command can execute with no error
+      val canExecute = process.waitFor() == 0
+      sink.close()
 
-      (canExecute, lines)
+      (canExecute, stdout.toList.mkString)
     }
-    catch { case e: Exception => (false, "") }
+    catch {case e: Exception => (false, "")}
   }
 
   /** Returns true if the tool is available and false otherwise. */
   lazy val Available: Boolean = {
-    execArgs(Executable +: TestCommand:_*)._1
+    execArgs(Executable +: TestCommand: _*)._1
   }
 }
 
@@ -111,7 +100,7 @@ trait CanRunScript {
   /** Extracts a resource from the classpath and writes it to a temp file on disk. */
   private def writeResourceToTempFile(resource: String): Path = {
     val lines = Io.readLinesFromResource(resource).toSeq
-    val path = Io.makeTempFile("script.", suffix = Suffix)
+    val path  = Io.makeTempFile("script.", suffix = Suffix)
     path.toFile.deleteOnExit()
     Io.writeLines(path, lines)
     path
@@ -124,8 +113,9 @@ trait Versioned {
   val TestCommand: Seq[String] = Seq(VersionFlag)
 
   /** Returns version of the tool */
-  lazy val Version: String     = execArgs(Executable +: TestCommand:_*)._2
+  lazy val Version: String = execArgs(Executable +: TestCommand:_*)._2
 }
+
 
 trait Modular {
   self: CommandLineTool =>
@@ -137,15 +127,15 @@ trait Modular {
   def TestModuleCommand(modules: Seq[String]): Seq[Seq[String]] = modules.map(TestModuleCommand)
 
   /** Returns true if the tested module exist with the tested executable. */
-  def IsModuleAvailable(module: String): Boolean                = execArgs(TestModuleCommand(module): _*)._1
+  def IsModuleAvailable(module: String): Boolean = execArgs(TestModuleCommand(module): _*)._1
 
   /** Returns true if all tested modules exist with the tested executable. */
-  def IsModuleAvailable(modules: Seq[String]): Boolean          =  modules.map(IsModuleAvailable).forall(x => x == true)
+  def IsModuleAvailable(modules: Seq[String]): Boolean =  modules.map(IsModuleAvailable).forall(_ == true)
 }
 
 object Rscript extends CommandLineTool with Versioned with Modular with CanRunScript {
-  val Executable: String      = "Rscript"
-  val Suffix: String          = ".R"
+  val Executable: String = "Rscript"
+  val Suffix: String     = ".R"
   def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-e", s"stopifnot(require('$module'))")
 
   /** Only returns true if R exists and ggplot2 is installed */
@@ -161,7 +151,8 @@ object GhostScript extends CommandLineTool with Versioned {
 }
 
 object Python3 extends CommandLineTool with Versioned with Modular with CanRunScript {
-  val Executable: String                             = "python3"
-  val Suffix: String                                 = ".py"
-  def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-c", s"'import $module'")
+  val Executable: String = "python3"
+  val Suffix: String     = ".py"
+  def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-c", s"import $module")
 }
+
