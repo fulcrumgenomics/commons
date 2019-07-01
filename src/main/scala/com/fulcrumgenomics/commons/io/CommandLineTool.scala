@@ -24,68 +24,103 @@
 
 package com.fulcrumgenomics.commons.io
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 
 import com.fulcrumgenomics.commons.util.LazyLogging
 
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 trait CommandLineTool extends LazyLogging {
+
   /** The name of the executable such as Rscript or gs. */
   val Executable: String
 
-  /** Command used for the above executable. */
-  val TestCommand: Seq[String]
+  /** Command used for the above executable.
+    *
+    * For example, to run `Rscript --version`:
+    * {{{
+    * scala> import com.fulcrumgenomics.commons.io._
+    * scala> val TestArgs = Seq("--version")
+    * scala> val Executable = "Rscript"
+    * scala> Rscript.execArgs(Executable +: TestArgs:_*)
+    * }}}
+    * */
+  val TestArgs: Seq[String]
 
   /** Exception class that holds onto an executable's exit/status code. */
   case class ToolException(status: Int) extends RuntimeException {
     override def getMessage: String = s"$Executable failed with exit code $status."
   }
 
-  /** Returns a tuple of (Boolean, String): first element is true when command can execute
-    * with no error; second element is a string of command stdout */
-  def execArgs(command: String*): (Boolean, String) = {
-    try {
+  /** Executes a command and returns the stdout.
+    *
+    * @param command the command to be executed
+    */
+  def execArgs(command: String*): Try[ListBuffer[String]] = {
+    Try {
       // Read redirected stdout to a string
-      val process = new ProcessBuilder(command: _*).redirectErrorStream(true).start()
-      val stdout  = mutable.ListBuffer[String]()
-      val sink    = new AsyncStreamSink(process.getInputStream, s => stdout.append(s))
-      // True if the command can execute with no error
-      val canExecute = process.waitFor() == 0
+      val process  = new ProcessBuilder(command: _*).redirectErrorStream(true).start()
+      val stdout   = ListBuffer[String]()
+      val sink     = new AsyncStreamSink(process.getInputStream, s => stdout.append(s))
+      val exitCode = process.waitFor()
+
       sink.close()
 
-      (canExecute, stdout.toList.mkString)
+      require(exitCode == 0, s"Command did not execute successfully. Exit code: $exitCode")
+
+      stdout
     }
-    catch {case e: Exception => (false, "")}
   }
 
   /** Returns true if the tool is available and false otherwise. */
-  lazy val Available: Boolean = {
-    execArgs(Executable +: TestCommand: _*)._1
-  }
+  lazy val Available: Boolean = execArgs(Executable +: TestArgs: _*).isSuccess
 }
 
-trait CanRunScript {
+/** Trait that indicates the executable can run scripts.*/
+trait ScriptRunner {
   self: CommandLineTool =>
+
   /** Suffix for scripts that can be run by this tool. */
   val Suffix: String
 
-  /** Executes a script from the classpath if the tested executable is available. */
-  def execIfAvailable(scriptResource: String, args: String*): Try[Unit] =
-    if (Available) exec(scriptResource, args:_*) else Success(Unit)
+  /** Executes a script from the classpath if this executable is available.
+    *
+    * @param scriptResource the name of the script resource on the classpath
+    * @param args a variable list of arguments to pass to the script
+    * @throws Exception when we are unable to execute to this script on the classpath with the given arguments.
+    */
+  def execIfAvailable(scriptResource: String, args: String*): Unit =
+    try { if (Available) exec(scriptResource, args:_*) }
+    catch { case e: Exception => throw new Exception(s"Cannot execute script from $scriptResource with args:$args") }
 
-  /** Executes from a script stored at a Path if the tested executable is available. */
-  def execIfAvailable(script: Path, args: String*): Try[Unit] =
-    if (Available) exec(script, args:_*) else Success(Unit)
+  /** Executes a script stored at a Path if the this executable is available.
+    *
+    * @param script Path of the script to be run
+    * @param args a variable list of arguments to pass to the script
+    * @throws Exception when we are unable to execute to this script on the classpath with the given arguments.
+    */
+  def execIfAvailable(script: Path, args: String*): Unit = execIfAvailable(script.toString, args: _*)
 
-  /** Executes a script from the classpath. */
-  def exec(scriptResource: String, args: String*): Try[Unit] =
-    Try { writeResourceToTempFile(scriptResource) }.map(path => exec(path, args:_*))
+  /** Executes a script from the classpath if this executable is available, raise an exception otherwise.
+    *
+    * @throws ToolException when the exit code from the called process is not zero.
+    * @throws Exception when we are unable to execute to this script on the classpath with the given arguments.
+    * @param scriptResource the name of the script resource on the classpath
+    * @param args a variable list of arguments to pass to the script
+    * @return Unit as this code is side-effecting
+    */
+  def exec(scriptResource: String, args: String*): Unit = exec(writeResourceToTempFile(scriptResource), args:_*)
 
-  /** Executes from a script stored at a Path. */
-  def exec(script: Path, args: String*): Try[Unit] = Try {
+  /** Execute from a script stored at a Path if this executable is available, raise an exception otherwise.
+    *
+    * @throws ToolException when the exit code from the called process is not zero.
+    * @throws Exception when we are unable to execute to this script with the given arguments.
+    * @param script Path of the script to be run
+    * @param args a variable list of arguments to pass to the script
+    * @return Unit as this code is side-effecting
+    */
+  def exec(script: Path, args: String*): Unit = try {
     val command = Executable +: script.toAbsolutePath.toString +: args
     val process = new ProcessBuilder(command:_*).redirectErrorStream(false).start()
     val pipe1   = Io.pipeStream(process.getErrorStream, logger.info)
@@ -95,9 +130,13 @@ trait CanRunScript {
     pipe2.close()
 
     if (retval != 0) throw ToolException(retval)
-  }
+  } catch {case e: Exception => throw new Exception(s"Cannot execute script from path $script with args: $args") }
 
-  /** Extracts a resource from the classpath and writes it to a temp file on disk. */
+  /** Extract a resource from the classpath and writes it to a temp file on disk.
+    *
+    * @param resource a given name on the classpath
+    * @return path to the temporary file
+    * */
   private def writeResourceToTempFile(resource: String): Path = {
     val lines = Io.readLinesFromResource(resource).toSeq
     val path  = Io.makeTempFile("script.", suffix = Suffix)
@@ -109,13 +148,16 @@ trait CanRunScript {
 
 trait Versioned {
   self: CommandLineTool =>
-  val VersionFlag: String      = "--version"
-  val TestCommand: Seq[String] = Seq(VersionFlag)
 
-  /** Returns version of the tool */
-  lazy val Version: String = execArgs(Executable +: TestCommand:_*)._2
+  /** The default version flag. */
+  val VersionFlag: String   = "--version"
+
+  /** Argument used to test version of the executable. */
+  val TestArgs: Seq[String] = Seq(VersionFlag)
+
+  /** Return version of this tool */
+  lazy val Version: Try[ListBuffer[String]] = execArgs(Executable +: TestArgs:_*)
 }
-
 
 trait Modular {
   self: CommandLineTool =>
@@ -124,35 +166,40 @@ trait Modular {
   def TestModuleCommand(module: String): Seq[String]
 
   /** Command used to test if multiple modules are included with the tested executable. */
-  def TestModuleCommand(modules: Seq[String]): Seq[Seq[String]] = modules.map(TestModuleCommand)
+  def TestModuleCommand(modules: String*): Seq[Seq[String]] = modules.map(TestModuleCommand)
 
   /** Returns true if the tested module exist with the tested executable. */
-  def IsModuleAvailable(module: String): Boolean = execArgs(TestModuleCommand(module): _*)._1
+  def ModuleAvailable(module: String): Boolean = execArgs(TestModuleCommand(module): _*).isSuccess
 
-  /** Returns true if all tested modules exist with the tested executable. */
-  def IsModuleAvailable(modules: Seq[String]): Boolean =  modules.map(IsModuleAvailable).forall(_ == true)
+  /** Returns true if all tested modules exist with the tested executable.
+    *
+    * For example:
+    * {{
+    * scala> import com.fulcrumgenomics.commons.io._
+    * scala> Rscript.IsModuleAvailable(Seq("ggplot2", "dplyr"))
+    * }}
+    */
+  def ModuleAvailable(modules: Seq[String]): Boolean =  modules.map(ModuleAvailable).forall(_ == true)
 }
 
-object Rscript extends CommandLineTool with Versioned with Modular with CanRunScript {
+object Rscript extends CommandLineTool with Versioned with Modular with ScriptRunner {
   val Executable: String = "Rscript"
   val Suffix: String     = ".R"
   def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-e", s"stopifnot(require('$module'))")
 
   /** Only returns true if R exists and ggplot2 is installed */
   override lazy val Available: Boolean = {
-    val ToolAvailable: Boolean    = execArgs(Executable +: Seq(VersionFlag):_*)._1
-    val ModuleAvailable : Boolean = IsModuleAvailable(module = "ggplot2")
-    Seq(ToolAvailable, ModuleAvailable).forall( _ == true)
+    val ToolAvailable: Boolean   = execArgs(Executable +: Seq(VersionFlag):_*).isSuccess
+    Seq(ToolAvailable, ModuleAvailable("ggplot2")).forall( _ == true)
   }
 }
 
-object GhostScript extends CommandLineTool with Versioned {
-  val Executable: String = "gs"
-}
-
-object Python3 extends CommandLineTool with Versioned with Modular with CanRunScript {
-  val Executable: String = "python3"
-  val Suffix: String     = ".py"
+trait Python extends CommandLineTool with Versioned with Modular with ScriptRunner {
+  val Executable: String
+  val Suffix: String = ".py"
   def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-c", s"import $module")
 }
 
+object Python extends Python  { val Executable: String = "python" }
+object Python2 extends Python { val Executable: String = "python2" }
+object Python3 extends Python { val Executable: String = "python3" }
