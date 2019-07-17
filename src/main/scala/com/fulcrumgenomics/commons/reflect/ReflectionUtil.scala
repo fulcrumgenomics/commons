@@ -29,6 +29,7 @@ import java.nio.file.Path
 import com.fulcrumgenomics.commons.io.PathUtil
 import com.fulcrumgenomics.commons.CommonsDef._
 
+import scala.language.postfixOps
 import scala.annotation.{ClassfileAnnotation, tailrec}
 import scala.collection.mutable
 import scala.reflect._

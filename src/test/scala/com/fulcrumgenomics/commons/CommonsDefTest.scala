@@ -223,7 +223,7 @@ class CommonsDefTest extends UnitSpec {
   "ParSupport" should "create a parallel collection with parallelism 2" in {
     val xs = Seq(1, 2, 3, 4, 5).parWith(parallelism = 2)
     xs.tasksupport.asInstanceOf[ForkJoinTaskSupport].forkJoinPool.getParallelism shouldBe 2
-    xs.map(_ * 2) shouldBe Seq(2, 4, 6, 8, 10)
+    xs.map(_ * 2).seq shouldBe Seq(2, 4, 6, 8, 10)
   }
 
   it should "allow setting of parallelism and async mode" in {

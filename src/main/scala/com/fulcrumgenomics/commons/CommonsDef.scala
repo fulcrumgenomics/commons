@@ -29,9 +29,12 @@ import java.io.Closeable
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
-import scala.collection.Parallelizable
-import scala.collection.parallel.{ForkJoinTaskSupport, ParIterableLike, TaskSupport}
-import scala.concurrent.forkjoin.ForkJoinPool
+import scala.collection.parallel.immutable
+import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable, TaskSupport}
+import java.util.concurrent.ForkJoinPool
+
+import scala.collection.parallel.immutable.{ParRange, ParVector}
+import scala.collection.parallel.mutable.ParArray
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
@@ -80,7 +83,7 @@ class CommonsDef {
   implicit class SafelyClosable(private val c: AutoCloseable) {
     def safelyClose() : Unit = {
       try { c.close() }
-      catch { case ex: Exception => Unit }
+      catch { case ex: Exception => () }
     }
   }
 
@@ -348,27 +351,38 @@ class CommonsDef {
     * Introduces [[parWith()]] methods that create parallel versions of the collection
     * with various configuration options.
     *
-    * @param parallelizable any parallelizable collection
+    * @param sequential a sequential (i.e. non-parallel) iterable
+    * @param f a function that generates a parallel collection from the sequential collection
     * @tparam A the type of the elements in the collection
-    * @tparam B the type of the parallel representation of the collection
+    * @tparam S the type of the non-parallel collection
+    * @tparam P the type of the parallel collection
+    *
     */
-  implicit class ParSupport[A, B <: ParIterableLike[_, _, _]](private val parallelizable: Parallelizable[A,B]) {
+  class ParSupport[A, S <: Iterable[A], P <: ParIterable[A]](private val sequential: S, f: S => P) {
     /** Creates a parallel collection with the provided TaskSupport. */
-    def parWith(taskSupport: TaskSupport): B = {
-      val par = parallelizable.par
+    def parWith(taskSupport: TaskSupport): P = {
+      val par = f(sequential)
       par.tasksupport = taskSupport
       par
     }
 
     /** Creates a parallel collection with the provided ForkJoinPool. */
-    def parWith(pool: ForkJoinPool): B = parWith(taskSupport=new ForkJoinTaskSupport(pool))
+    def parWith(pool: ForkJoinPool): P = parWith(taskSupport=new ForkJoinTaskSupport(pool))
 
     /** Creates a parallel collection with the desired level of parallelism and FIFO semantics. */
-    def parWith(parallelism: Int, fifo: Boolean = true): B = {
+    def parWith(parallelism: Int, fifo: Boolean = true): P = {
       parWith(new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, fifo))
     }
   }
 
+  /** Implicit that generates a ParSupport from a Seq. */
+  implicit def seqToParSupport[A](seq: Seq[A]): ParSupport[A, _ <: Seq[A], _ <: immutable.ParSeq[A]] = seq match {
+    case v: Vector[A] => new ParSupport(v, (x: Vector[A]) => new immutable.ParVector[A](x))
+    case s            => new ParSupport(s, (x: Seq[A])    => new immutable.ParVector[A](x.toVector))
+  }
+
+  /** Implicit that generates a ParSupport from a Range. */
+  implicit def rangeToParSupport(r: Range): ParSupport[Int, Range, immutable.ParRange] = new ParSupport(r, x => new immutable.ParRange(x))
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Path or String-like type definitions that hint at what the path or string are used for.

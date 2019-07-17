@@ -187,11 +187,11 @@ class ArgumentLookup[ArgType <: Argument](args: ArgType*) {
     byFieldName(arg.name)  = arg
   }
 
-  /** Returns a view over the list of argument definitions for easy filtering/querying/mapping. */
-  def view:Seq[ArgType] = this.argumentDefinitions.view
+  /** Returns an iterator over the list of argument definitions for easy filtering/querying/mapping. */
+  def iterator: Iterator[ArgType] = this.argumentDefinitions.iterator
 
   /** Returns the full set of argument definitions ordered by their indices. */
-  def ordered : Seq[ArgType] = argumentDefinitions.toList.sortBy(_.index)
+  def ordered: Seq[ArgType] = argumentDefinitions.toList.sortBy(_.index)
 
   /** Returns the ArgumentDefinition, if one exists, for the provided field name. */
   def forField(fieldName: String) : Option[ArgType] = this.byFieldName.get(fieldName)

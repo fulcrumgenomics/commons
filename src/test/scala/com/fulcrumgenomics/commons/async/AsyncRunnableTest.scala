@@ -117,7 +117,7 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
   "AsyncRunnable.throwable" should "return the exception thrown in the run() method" in {
     val runnable = new AsyncRunnable {
       override protected def execute(): Unit = require(requirement=false, "exception")
-    } start()
+    }.start()
     runnable.started shouldBe true
     runnable.awaitDone()
     runnable.done shouldBe true
@@ -129,7 +129,7 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
     val runnable = new AsyncRunnable {
       override protected def execute(): Unit = require(requirement=false, "exception")
       override protected def uponException(): Unit = latch.countDown()
-    } start()
+    }.start()
     runnable.awaitDone()
     runnable.done shouldBe true
     runnable.throwable.isDefined shouldBe true
@@ -141,7 +141,7 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
     val runnable = new AsyncRunnable {
       override protected def execute(): Unit = require(requirement=false, "exception")
       override protected def uponFinally(): Unit = latch.countDown()
-    } start()
+    }.start()
     runnable.awaitDone()
     runnable.done shouldBe true
     runnable.throwable.isDefined shouldBe true
@@ -151,9 +151,9 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
   it should "be called when the run() method when the run method completes with no exception" in {
     val latch = new CountDownLatch(1)
     val runnable = new AsyncRunnable {
-      override protected def execute(): Unit = Unit
+      override protected def execute(): Unit = ()
       override protected def uponFinally(): Unit = latch.countDown()
-    } start()
+    }.start()
     runnable.awaitDone()
     runnable.done shouldBe true
     runnable.throwable.isDefined shouldBe false
@@ -164,7 +164,7 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
     val runnable = new AsyncRunnable {
       override protected def execute(): Unit = require(requirement=false, "exception")
       def check(): Unit = checkAndRaise()
-    } start()
+    }.start()
     runnable.awaitDone()
     an[RuntimeException] should be thrownBy runnable.check()
   }
@@ -173,9 +173,9 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
     // Create an AsyncRunnable that has a method that blocks.  Then create a thread with a runnable that calls the
     // blocking method.  Interrupt the latter thread, and make sure that a RunTimeException was thrown.
     val asyncRunnable = new AsyncRunnable {
-      override protected def execute(): Unit = Unit
+      override protected def execute(): Unit = ()
       def waitForIt(): Unit = tryAndModifyInterruptedException("waiting") { Thread.sleep(10000) }
-    } start()
+    }.start()
     val waitForItRunnable = new Runnable {
       var result: Option[Try[Unit]] = None
       override def run(): Unit = result = Some(Try { asyncRunnable.waitForIt() } )

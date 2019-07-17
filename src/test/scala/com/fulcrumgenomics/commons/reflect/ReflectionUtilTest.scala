@@ -196,7 +196,6 @@ class ReflectionUtilTest extends UnitSpec {
     it should "identify various classes that are not sub-classes of Seq[_] not as seq fields" in {
       val classes = List(
         classOf[scala.collection.Map[_, _]],
-        classOf[scala.collection.MapLike[_, _, _]],
         classOf[scala.collection.immutable.Map[_, _]],
         classOf[scala.collection.immutable.ListMap[_, _]],
         classOf[scala.collection.mutable.Map[_, _]],
@@ -229,7 +228,6 @@ class ReflectionUtilTest extends UnitSpec {
     it should "identify various classes that are not sub-classes of either Seq[_] or java.util.Collection[_] not as collection fields" in {
       val classes = List(
         classOf[scala.collection.Map[_, _]],
-        classOf[scala.collection.MapLike[_, _, _]],
         classOf[scala.collection.immutable.Map[_, _]],
         classOf[scala.collection.immutable.ListMap[_, _]],
         classOf[scala.collection.mutable.Map[_, _]],

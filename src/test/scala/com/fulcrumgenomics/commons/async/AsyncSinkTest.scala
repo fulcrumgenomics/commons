@@ -147,7 +147,7 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
   it should "handle an exception thrown by the provided sink method" in {
     val writer = new Writer[String] {
       def write(item: String): Unit = throw new Exception
-      def close(): Unit = Unit
+      def close(): Unit = ()
     }
     val sink = new AsyncSink[String](sink = writer.write, source = Some(writer)).start()
     sink.add("item")
