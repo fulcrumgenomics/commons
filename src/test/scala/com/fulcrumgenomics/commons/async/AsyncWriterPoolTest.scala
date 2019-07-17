@@ -79,7 +79,7 @@ class AsyncWriterPoolTest extends UnitSpec {
   it should "propagate exceptions thrown in writer threads" in {
     val writer = new Writer[String] {
       override def write(item: String): Unit = throw new UnsupportedOperationException
-      override def close(): Unit = Unit
+      override def close(): Unit = ()
     }
 
     val pool = new AsyncWriterPool(2)
@@ -90,7 +90,7 @@ class AsyncWriterPoolTest extends UnitSpec {
 
   it should "propagate exceptions thrown in close methods" in {
     val writer = new Writer[String] {
-      override def write(item: String): Unit = Unit
+      override def write(item: String): Unit = ()
       override def close(): Unit = throw new UnsupportedOperationException
     }
 

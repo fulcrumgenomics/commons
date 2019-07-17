@@ -70,15 +70,15 @@ class NumericCounter[T](implicit numeric: Numeric[T]) extends SimpleCounter[T] {
   /** Returns the mean as a [Double], or zero if there are no counts. */
   def mean(): Double = {
     if (0 == size) return 0.0
-    this._totalMass.toDouble() / total
+    this._totalMass.toDouble / total
   }
 
   /** Returns the standard deviation as a [Double], or zero if there are no counts.  */
   def stddev(m: Double = mean()): Double = {
     if (0 == size) return 0.0
-    val sum = iterator.map { case (k, v) => v * Math.pow(k.toDouble() - m, 2) }.sum
+    val sum = iterator.map { case (k, v) => v * Math.pow(k.toDouble - m, 2) }.sum
     if (0 == total) 0
-    else if (1== total) Math.sqrt(sum / this._totalMass.toDouble())
+    else if (1 == total) Math.sqrt(sum / this._totalMass.toDouble)
     else Math.sqrt(sum / (total - 1.0))
   }
 
@@ -99,7 +99,7 @@ class NumericCounter[T](implicit numeric: Numeric[T]) extends SimpleCounter[T] {
     val count: Long = total
 
     if (count == 0) 0.0
-    else if (count == 1) iterator.next()._1.toDouble()
+    else if (count == 1) iterator.next()._1.toDouble
     else {
       // Find the break point for finding the median value.  If we have an even # of items, we will need to average
       // two values.
@@ -126,7 +126,7 @@ class NumericCounter[T](implicit numeric: Numeric[T]) extends SimpleCounter[T] {
       }
 
       (midLowValue, midHighValue) match {
-        case (Some(low), Some(high)) => (low + high).toDouble() / 2.0
+        case (Some(low), Some(high)) => (low + high).toDouble / 2.0
         case _ => unreachable()
       }
     }
@@ -136,7 +136,7 @@ class NumericCounter[T](implicit numeric: Numeric[T]) extends SimpleCounter[T] {
   def mad(m: Double = median()): Double = {
     val deviations = new NumericCounter[Double]()
     this.iterator.foreach { case (value, count) =>
-      val deviation = Math.abs(value.toDouble() - m)
+      val deviation = Math.abs(value.toDouble - m)
       deviations.count(deviation, count)
     }
     deviations.median()

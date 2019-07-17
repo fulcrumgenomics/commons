@@ -134,17 +134,17 @@ trait AsyncRunnable extends Runnable {
   protected def execute(): Unit
 
   /** The method to execute if an exception occurs in the asynchronous thread.  This should not block. */
-  protected def uponException(): Unit = Unit
+  protected def uponException(): Unit = ()
 
   /** The method to execute upon successfully execution of the run method or an exception occurs.  This should not block. */
-  protected def uponFinally(): Unit = Unit
+  protected def uponFinally(): Unit = ()
 
   /** Checks to see if an exception has been raised by an asynchronous thread and if so rethrows it.  Use this method
     * before code that assumes the threads have not encountered an exception.
     */
   protected final def checkAndRaise(): Unit = {
     _throwable.getAndSet(null) match {
-      case null           => Unit
+      case null           => ()
       case thr: Throwable => throw thr
     }
   }

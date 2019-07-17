@@ -78,7 +78,7 @@ trait ConfigurationLike {
   protected def config : Config
 
   /** Method that can be overridden to receive a call each time a configuration path is requested. */
-  protected def keyRequested(path: String): Unit = Unit
+  protected def keyRequested(path: String): Unit = ()
 
   /**
     * Method to allow subclasses to override how errors are handled, e.g. by logging or throwing

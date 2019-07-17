@@ -36,11 +36,11 @@ sealed trait HeadOption[A] {
   * A better buffered iterator that provides implementations of takeWhile and dropWhile
   * that don't discard extra values.
   */
-class BetterBufferedIterator[A](private val iterator: Iterator[A]) extends HeadOption[A] with BufferedIterator[A] {
+class BetterBufferedIterator[A](private val iter: Iterator[A]) extends HeadOption[A] with BufferedIterator[A] {
   private var buffer: Option[A] = maybeNext
 
   /** Returns a Some(A) if there is a next in the iterator else None. */
-  private def maybeNext = if (this.iterator.hasNext) Some(this.iterator.next()) else None
+  private def maybeNext = if (this.iter.hasNext) Some(this.iter.next()) else None
 
   /** Returns the next item in the iterator without consuming it. */
   override def head: A = this.buffer.get

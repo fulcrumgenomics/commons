@@ -83,8 +83,8 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("http://www.fulcrumgenomics.com")),
   homepage             := Some(url("http://github.com/fulcrumgenomics/commons")),
   startYear            := Some(2015),
-  scalaVersion         := "2.12.8",
-  crossScalaVersions   := Seq("2.11.12", "2.12.8"),
+  scalaVersion         := "2.13.0",
+  crossScalaVersions   := Seq("2.12.8", "2.13.0"),
   scalacOptions        ++= Seq("-target:jvm-1.8", "-deprecation", "-unchecked"),
   scalacOptions in (Compile, doc) ++= docScalacOptions,
   scalacOptions in (Test, doc) ++= docScalacOptions,
@@ -116,6 +116,16 @@ lazy val root = Project(id="commons", base=file("."))
       "com.typesafe"   %  "config"        % "1.3.2",
       "org.scala-lang" %  "scala-reflect" % scalaVersion.value,
       //---------- Test libraries -------------------//
-      "org.scalatest"  %% "scalatest"     % "3.0.1"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
+      "org.scalatest"  %% "scalatest"     % "3.0.8"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
+  )
+  .settings(
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, major)) if major >= 13 =>
+          Seq("org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0")
+        case _ =>
+          Seq()
+      }
+    }
   )
