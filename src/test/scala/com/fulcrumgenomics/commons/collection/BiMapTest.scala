@@ -96,4 +96,22 @@ class BiMapTest extends UnitSpec {
     map.add(2, "2")
     map.values shouldBe Set("1", "2").toIterable
   }
+
+  private case class CustomHashCode(code: Int) {
+    override def hashCode(): Int = code
+  }
+
+  "BiMap" should "handle hash collisions" in {
+    val map = new BiMap[CustomHashCode, Int]()
+
+    val obj1 = CustomHashCode(1)
+    val obj2 = CustomHashCode(2)
+    val obj3 = CustomHashCode(2)
+
+    map.add(obj1, obj1.code)
+    map.add(obj2, obj2.code)
+    map.add(obj3, obj3.code) // collision!
+
+    map.size shouldBe 2
+  }
 }
