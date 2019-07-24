@@ -26,6 +26,7 @@
 package com.fulcrumgenomics.commons.util
 
 import com.fulcrumgenomics.commons.CommonsDef.seqToParSupport
+
 /**
   * Tests for Threads
   */
@@ -33,7 +34,7 @@ class ThreadsTest extends UnitSpec {
 
   "Threads.IterableThreadLocal" should "create thread local objects with a factory for initial values" in {
     val threadLocalValues = Iterator.iterate(1)(i => i + 1)
-    val threadLocal       = new Threads.IterableThreadLocal[Int](() => threadLocalValues.next())
+    val threadLocal       = new Threads.IterableThreadLocal[Int](() => threadLocalValues.synchronized(threadLocalValues.next()))
     val outputValues      = Seq(1, 2, 3, 4, 5)
       .parWith(parallelism = 2)
       .map(_ + threadLocal.get())
