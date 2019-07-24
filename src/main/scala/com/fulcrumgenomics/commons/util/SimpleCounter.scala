@@ -23,14 +23,13 @@
  */
 package com.fulcrumgenomics.commons.util
 
-import java.util
-
+import scala.collection.compat._
 import scala.reflect.runtime.universe._
 import scala.collection.mutable
 
 object SimpleCounter {
   /** Generates a counter that has counted all the objects provided. */
-  def apply[T](ts: TraversableOnce[T])(implicit tt: TypeTag[T]) : SimpleCounter[T] = {
+  def apply[T](ts: IterableOnce[T])(implicit tt: TypeTag[T]) : SimpleCounter[T] = {
     val counter = new SimpleCounter[T]
     ts.foreach(counter.count)
     counter

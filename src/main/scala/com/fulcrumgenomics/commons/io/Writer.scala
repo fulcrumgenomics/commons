@@ -25,6 +25,7 @@
 package com.fulcrumgenomics.commons.io
 
 import java.io.Closeable
+import scala.collection.compat._
 
 /** Writer trait to standardize how to interact with classes that write out objects. */
 trait Writer[A] extends Closeable {
@@ -32,7 +33,7 @@ trait Writer[A] extends Closeable {
   def write(item: A): Unit
 
   /** Writes out one or more items in order. */
-  def write[B <: A](items: TraversableOnce[B]): Unit = items.foreach(write)
+  def write[B <: A](items: IterableOnce[B]): Unit = items.foreach(write)
 
   /** Writes an item and returns a reference to the writer. */
   def +=(item: A): this.type = {
@@ -41,7 +42,7 @@ trait Writer[A] extends Closeable {
   }
 
   /** Writes an item and returns a reference to the writer. */
-  def ++=[B <: A](items: TraversableOnce[B]): this.type = {
+  def ++=[B <: A](items: IterableOnce[B]): this.type = {
     write(items)
     this
   }

@@ -29,12 +29,11 @@ import java.io.Closeable
 import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
 import com.fulcrumgenomics.commons.util.Logger
 
+import scala.collection.compat._
 import scala.collection.parallel.immutable
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable, TaskSupport}
 import java.util.concurrent.ForkJoinPool
 
-import scala.collection.parallel.immutable.{ParRange, ParVector}
-import scala.collection.parallel.mutable.ParArray
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
@@ -140,7 +139,7 @@ class CommonsDef {
     }
   }
 
-  implicit class MaxNBy[A](val things: TraversableOnce[A]) {
+  implicit class MaxNBy[A](val things: IterableOnce[A]) {
     /** Finds the first `n` elements with the largest values.
       *
       * @param n the number of elements return.
@@ -335,7 +334,7 @@ class CommonsDef {
     * @param sequence the sequence of items to transform and sum.
     * @tparam A the type of items to transform.
     */
-  implicit class SumBy[A](sequence: TraversableOnce[A]) {
+  implicit class SumBy[A](sequence: IterableOnce[A]) {
     /**
       * Applies the given transform to the items in sequence, and then sums them.
       * @param f the transform to map items from type [[A]] to type [[B]].

@@ -27,18 +27,19 @@ package com.fulcrumgenomics.commons.util
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
+import scala.collection.compat._
 import scala.collection.mutable
 
 object NumericCounter {
   /** Generates a counter that has counted all the numerics provided. */
-  def apply[T](ts: TraversableOnce[T])(implicit numeric: Numeric[T]) : NumericCounter[T] = {
+  def apply[T](ts: IterableOnce[T])(implicit numeric: Numeric[T]) : NumericCounter[T] = {
     val counter = new NumericCounter[T]
     ts.foreach(counter.count)
     counter
   }
 
   /** Generates a counter that has counted all the numerics provided. */
-  def from[T](ts: TraversableOnce[(T, Long)])(implicit numeric: Numeric[T]) : NumericCounter[T] = {
+  def from[T](ts: IterableOnce[(T, Long)])(implicit numeric: Numeric[T]) : NumericCounter[T] = {
     val counter = new NumericCounter[T]
     ts.foreach { case (value, count) => counter.count(value, count) }
     counter

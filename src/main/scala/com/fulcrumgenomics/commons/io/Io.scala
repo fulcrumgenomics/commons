@@ -28,6 +28,7 @@ import java.nio.file.{Files, Path}
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
+import scala.collection.compat._
 import scala.io.Source
 
 /**
@@ -77,7 +78,7 @@ trait IoUtil {
   }
 
   /** Asserts that the Path represents a file that can be opened and read. */
-  def assertReadable(paths : TraversableOnce[_ <: Path]) : Unit = paths.foreach(assertReadable)
+  def assertReadable(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertReadable)
 
   /** Asserts that the Paths represents files that can be opened and read. */
   def assertReadable(path: Path) : Unit = {
@@ -88,7 +89,7 @@ trait IoUtil {
   }
 
   /** Asserts that the Paths represent directories that can be listed. */
-  def assertListable(paths : TraversableOnce[_ <: Path]) : Unit = paths.foreach(assertListable)
+  def assertListable(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertListable)
 
   /** Asserts that the Path represents a directory that can be listed. */
   def assertListable(path: Path) : Unit = {
@@ -106,7 +107,7 @@ trait IoUtil {
     * @param parentMustExist if true (default) the file or its direct parent must exist, if false then only
     *                        require that the first parent that actually exists is writable
     */
-  def assertCanWriteFiles(paths : TraversableOnce[_ <: Path], parentMustExist:Boolean = true) : Unit = {
+  def assertCanWriteFiles(paths : IterableOnce[_ <: Path], parentMustExist:Boolean = true) : Unit = {
     paths.foreach(p => assertCanWriteFile(p, parentMustExist))
   }
 
@@ -137,7 +138,7 @@ trait IoUtil {
   }
 
   /** Asserts that a path represents an existing directory and that new files can be created within the directory. */
-  def assertWritableDirectory(paths : TraversableOnce[_ <: Path]) : Unit = paths.foreach(assertWritableDirectory)
+  def assertWritableDirectory(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertWritableDirectory)
 
   /** Asserts that a path represents an existing directory and that new files can be created within the directory. */
   def assertWritableDirectory(path : Path) : Unit = {
@@ -172,7 +173,7 @@ trait IoUtil {
   }
 
   /** Writes one or more lines to a file represented by a path. */
-  def writeLines(path: Path, lines: TraversableOnce[String]): Unit = {
+  def writeLines(path: Path, lines: IterableOnce[String]): Unit = {
     val writer = toWriter(path)
     lines.foreach(line => writer.append(line).append('\n'))
     writer.close()
