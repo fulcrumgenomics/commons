@@ -25,6 +25,8 @@
 
 package com.fulcrumgenomics.commons.util
 
+import com.fulcrumgenomics.commons.CommonsDef._
+
 /**
   * Tests for NumericCounter.
   */

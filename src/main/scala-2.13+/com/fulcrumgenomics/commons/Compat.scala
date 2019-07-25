@@ -7,4 +7,10 @@ private[commons] trait Compat {
 
   /** For basic views we use the new scala.collection.View. */
   type View[+A] = scala.collection.View[A]
+
+  /** Starting with scala 2.13 the default ordering of Floats is deprecated and we need to pick a preferred ordering. */
+  implicit val FloatOrdering: Ordering[Float] = scala.Ordering.Float.TotalOrdering
+
+  /** Starting with scala 2.13 the default ordering of Doubles is deprecated and we need to pick a preferred ordering. */
+  implicit val DoubleOrdering: Ordering[Double] = scala.Ordering.Double.TotalOrdering
 }
