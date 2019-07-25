@@ -113,7 +113,7 @@ class DelimitedDataParser(lines: IterableOnce[String],
                           val trimFields: Boolean = DelimitedDataParser.DefaultTrim,
                           val header: Seq[String] = Seq.empty) extends Iterator[Row] with LazyLogging {
 
-  private val _lines = if (ignoreBlankLines) lines.toIterator.filter(_.nonEmpty) else lines.toIterator
+  private val _lines = if (ignoreBlankLines) lines.iterator.filter(_.nonEmpty) else lines.iterator
 
   // An array of the headers
   private val _headers = {

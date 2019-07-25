@@ -78,7 +78,7 @@ trait IoUtil {
   }
 
   /** Asserts that the Path represents a file that can be opened and read. */
-  def assertReadable(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertReadable)
+  def assertReadable(paths : IterableOnce[_ <: Path]) : Unit = paths.iterator.foreach(assertReadable)
 
   /** Asserts that the Paths represents files that can be opened and read. */
   def assertReadable(path: Path) : Unit = {
@@ -89,7 +89,7 @@ trait IoUtil {
   }
 
   /** Asserts that the Paths represent directories that can be listed. */
-  def assertListable(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertListable)
+  def assertListable(paths : IterableOnce[_ <: Path]) : Unit = paths.iterator.foreach(assertListable)
 
   /** Asserts that the Path represents a directory that can be listed. */
   def assertListable(path: Path) : Unit = {
@@ -108,7 +108,7 @@ trait IoUtil {
     *                        require that the first parent that actually exists is writable
     */
   def assertCanWriteFiles(paths : IterableOnce[_ <: Path], parentMustExist:Boolean = true) : Unit = {
-    paths.foreach(p => assertCanWriteFile(p, parentMustExist))
+    paths.iterator.foreach(p => assertCanWriteFile(p, parentMustExist))
   }
 
   /**
@@ -138,7 +138,7 @@ trait IoUtil {
   }
 
   /** Asserts that a path represents an existing directory and that new files can be created within the directory. */
-  def assertWritableDirectory(paths : IterableOnce[_ <: Path]) : Unit = paths.foreach(assertWritableDirectory)
+  def assertWritableDirectory(paths : IterableOnce[_ <: Path]) : Unit = paths.iterator.foreach(assertWritableDirectory)
 
   /** Asserts that a path represents an existing directory and that new files can be created within the directory. */
   def assertWritableDirectory(path : Path) : Unit = {
@@ -175,7 +175,7 @@ trait IoUtil {
   /** Writes one or more lines to a file represented by a path. */
   def writeLines(path: Path, lines: IterableOnce[String]): Unit = {
     val writer = toWriter(path)
-    lines.foreach(line => writer.append(line).append('\n'))
+    lines.iterator.foreach(line => writer.append(line).append('\n'))
     writer.close()
   }
 

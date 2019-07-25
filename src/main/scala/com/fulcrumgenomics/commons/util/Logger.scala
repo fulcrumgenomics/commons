@@ -53,7 +53,7 @@ class Logger(clazz : Class[_]) {
     if (l.compareTo(Logger.level) >= 0) {
       val builder = new StringBuilder(256)
       builder.append("[").append(fmt.format(new Date())).append(" | ").append(name).append(" | ").append(l.toString).append("] ")
-      parts.foreach(part => builder.append(part))
+      parts.iterator.foreach(part => builder.append(part))
       this.out match {
         case Some(o) => o.println(builder.toString())
         case _ => Logger.out.println(builder.toString())

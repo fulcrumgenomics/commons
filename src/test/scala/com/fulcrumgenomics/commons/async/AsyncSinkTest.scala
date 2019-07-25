@@ -53,7 +53,7 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
 
   /** Returns a [[RunnableWithResult]] that asynchronously adds the items to the given sink, along with a daemon
     * [[Thread]] that is created containing the [[RunnableWithResult]] and is started. */
-  private def buildRunnableAndThreadForSinkAdd[T](sink: AsyncSink[T], items: Traversable[T]): (RunnableWithResult, Thread) = {
+  private def buildRunnableAndThreadForSinkAdd[T](sink: AsyncSink[T], items: Iterable[T]): (RunnableWithResult, Thread) = {
     buildRunnableAndThread(items.foreach(sink.add))
   }
 
@@ -61,7 +61,7 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
     {
       val writer = new StringWriter
       val sink = new AsyncSink[String](sink = writer.write, source = Some(writer)).start().close()
-      writer.items shouldBe 'empty
+      writer.items.isEmpty shouldBe true
       writer.closed shouldBe true
     }
 
@@ -69,7 +69,7 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
     {
       val writer = new StringWriter
       new AsyncSink[String](sink=writer.write, source=None).start().close()
-      writer.items shouldBe 'empty
+      writer.items.isEmpty shouldBe true
       writer.closed shouldBe false
     }
   }
@@ -94,13 +94,13 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
       if (bufferSize < numItems) { // blocks when adding to the writer, so the queue will fill up, and we'll block adding
         Thread.sleep(100)
         runnable.done shouldBe false
-        writer.items shouldBe 'empty
+        writer.items.isEmpty shouldBe true
       }
       else { // queue size is more than the # of items, so the runnable should be able to add to the sink
         thread.join(10000) // wait for the thread to complete
         runnable.done shouldBe true
       }
-      writer.items shouldBe 'empty
+      writer.items.isEmpty shouldBe true
 
       // unblock
       writer.block = false
@@ -139,7 +139,7 @@ class AsyncSinkTest extends UnitSpec with OptionValues {
     runnable.result.value.isSuccess shouldBe false
     runnable.result.value.failed.get.getMessage shouldBe "Interrupted queueing item."
     runnable.result.value.failed.get.isInstanceOf[RuntimeException] shouldBe true
-    sink.throwable shouldBe 'empty
+    sink.throwable.isEmpty shouldBe true
 
     sink.close()
   }

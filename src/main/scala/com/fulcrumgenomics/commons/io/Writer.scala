@@ -33,7 +33,7 @@ trait Writer[A] extends Closeable {
   def write(item: A): Unit
 
   /** Writes out one or more items in order. */
-  def write[B <: A](items: IterableOnce[B]): Unit = items.foreach(write)
+  def write[B <: A](items: IterableOnce[B]): Unit = items.iterator.foreach(write)
 
   /** Writes an item and returns a reference to the writer. */
   def +=(item: A): this.type = {

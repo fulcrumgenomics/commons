@@ -26,6 +26,8 @@ package com.fulcrumgenomics.commons.collection
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
+import scala.collection.BufferedIterator
+
 /** A little trait to allow BetterBufferedIterator to override the headOption method. The latter method
   * is not found in [[BetterBufferedIterator]] in 2.11.11, but in 2.12.2! */
 sealed trait HeadOption[A] {

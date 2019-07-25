@@ -32,7 +32,7 @@ class NumericCounterTest extends UnitSpec {
 
   "NumericCounter" should "operate on Ints" in {
     val counter = new NumericCounter[Int]()
-    Stream.range(1, 10, 1).foreach { i => counter.count(i, 1) }
+    Range(1, 10, 1).foreach { i => counter.count(i, 1) }
     counter.count(1)
     counter.iterator.sliding(2).foreach { case Seq(lower, upper) => lower should be < upper }
     counter.mean() shouldBe 4.6 +- 0.0001
@@ -45,7 +45,7 @@ class NumericCounterTest extends UnitSpec {
 
   it should "operate on Doubles" in {
     val counter = new NumericCounter[Double]()
-    Stream.range(1, 10, 1).foreach { i => counter.count(i / 10.0, 1) }
+    Range(1, 10, 1).foreach { i => counter.count(i / 10.0, 1) }
     counter.count(1 / 10.0)
     counter.iterator.sliding(2).foreach { case Seq(lower, upper) => lower should be < upper }
     counter.mean() shouldBe 0.46 +- 0.0001

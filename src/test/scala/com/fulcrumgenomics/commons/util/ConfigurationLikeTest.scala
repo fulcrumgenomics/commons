@@ -88,9 +88,9 @@ class ConfigurationLikeTest extends UnitSpec with CaptureSystemStreams with Opti
     conf[Set[String]]("some-string-set") should contain theSameElementsAs Set("A", "B", "C")
     conf[Option[String]]("some-option-string").value shouldBe "Some"
     conf[Option[String]]("option-empty-string").value shouldBe ""
-    conf[Option[String]]("none-option-string") shouldBe 'empty
+    conf[Option[String]]("none-option-string").isEmpty shouldBe true
     conf[Option[Int]]("some-option-int").value shouldBe 1
-    conf[Option[Int]]("none-option-int") shouldBe 'empty
+    conf[Option[Int]]("none-option-int").isEmpty shouldBe true
   }
 
   it should "support optional configuration" in {
@@ -161,7 +161,7 @@ class ConfigurationLikeTest extends UnitSpec with CaptureSystemStreams with Opti
     val conf = Configuration(configPath)
     conf[String]("config-name") shouldBe "a-name"
     conf[Boolean]("config-status") shouldBe false
-    conf.get[String]("config-does-not-exist") shouldBe 'empty
+    conf.get[String]("config-does-not-exist").isEmpty shouldBe true
 
     conf.requestedKeys should contain theSameElementsInOrderAs Seq("config-does-not-exist", "config-name", "config-status")
   }

@@ -397,13 +397,13 @@ class ReflectionUtilTest extends UnitSpec {
 
   "ReflectionUtil.enumOptions" should "return the options for an enum" in {
     val options = ReflectionUtil.enumOptions(classOf[GoodEnum])
-    options shouldBe 'success
+    options.isSuccess shouldBe true
     options.get should contain (GoodEnum.GOOD)
     options.get should contain (GoodEnum.BOY)
   }
 
   it should "fail when there are no options for an enum" in {
-    ReflectionUtil.enumOptions(classOf[BadEnum]) shouldBe 'failure
+    ReflectionUtil.enumOptions(classOf[BadEnum]).isFailure shouldBe true
   }
 
   "ReflectionUtil.sealedTraitOptions" should "find the possible values in a sealed trait/case object hierarchy with a values method" in {
@@ -417,11 +417,11 @@ class ReflectionUtilTest extends UnitSpec {
   }
 
   it should "fail when the class is not a sealed trait" in {
-    ReflectionUtil.sealedTraitOptions(classOf[GoodEnum]) shouldBe 'failure
+    ReflectionUtil.sealedTraitOptions(classOf[GoodEnum]).isFailure shouldBe true
   }
 
   it should "fail when the sub-classes are not case objects" in {
-    ReflectionUtil.sealedTraitOptions(classOf[CaseClasses]) shouldBe 'failure
+    ReflectionUtil.sealedTraitOptions(classOf[CaseClasses]).isFailure shouldBe true
   }
 
   "ReflectionUtil.buildUnitFromString" should "throw an Exception when an unknown enum value is given" in {
@@ -518,7 +518,7 @@ class ReflectUtilAnnotationTest extends UnitSpec {
 
   "ReflectionUtil.findJavaAnnotation" should "return the annotation on a class" in {
     val value = ReflectionUtil.findJavaAnnotation(clazz=classOf[ClassJavaAnnotation], annotationClazz=classOf[TestJavaAnnotation])
-    value shouldBe 'defined
+    value.isDefined shouldBe true
     //value.get.getClass shouldBe classOf[TestJavaAnnotation]
     value.map(_.placeholder()) shouldBe Some("value")
   }

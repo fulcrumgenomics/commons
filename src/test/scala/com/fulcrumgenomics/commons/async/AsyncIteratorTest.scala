@@ -33,14 +33,14 @@ class AsyncIteratorTest extends UnitSpec with OptionValues {
   "AsyncIterator" should "wrap an empty iterator" in {
     val iter = new AsyncIterator(Iterator[String]()).start()
     iter.hasNext shouldBe false
-    iter shouldBe 'empty
+    iter.isEmpty shouldBe true
     an[NoSuchElementException] should be thrownBy iter.next()
   }
 
   Seq((10, "fewer"), (20, "the same number of"), (30, "more")).foreach { case (numItems, msg) =>
     it should s"wrap an iterator that has $msg items than bufferSize" in {
       val source = Seq.range(start=0, end=numItems)
-      val items = new AsyncIterator(source.toIterator, bufferSize=Some(20)).start().toList
+      val items = new AsyncIterator(source.iterator, bufferSize=Some(20)).start().toList
       items should contain theSameElementsInOrderAs source
     }
   }

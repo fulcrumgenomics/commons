@@ -158,7 +158,7 @@ class CommonsDef {
       * @tparam B the result type of the function f.
       * @return  the first `n` elements of this traversable or iterator with the largest values measured by function f.
       */
-    def maxNBy[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = if (things.isEmpty || n == 0) Seq.empty[A] else {
+    def maxNBy[B](n: Int, f: A => B, distinct: Boolean = false)(implicit cmp: Ordering[B]): Seq[A] = if (n == 0) Seq.empty[A] else {
       // Developer Note: a future improvement would be to determine when to use maxNBySmall vs. maxNByLarge.  Also,
       // if we want to get n items from a sequence that is close to length m, we could find the m-n items to remove, as
       // to save memory.
@@ -214,7 +214,7 @@ class CommonsDef {
       val toThingAndValue: (A, Int) => ThingAndValue[B] = {
         if (distinct) (t: A, _: Int) => ThingAndValue(t, f(t)) else (t: A, i: Int) => ThingAndValue(t, f(t), i)
       }
-      this.things.toIterator.zipWithIndex.foreach { case (thing, index) =>
+      this.things.iterator.zipWithIndex.foreach { case (thing, index) =>
         val thingAndValue = toThingAndValue(thing, index)
         // If we haven't reached N yet, add it.  If the last element is "smaller" than the curret one, add it.  Otherwise, don't!
         if (orderedThings.isEmpty || orderedThings.size() < n) orderedThings.add(thingAndValue)
@@ -342,7 +342,7 @@ class CommonsDef {
       * @tparam B the type of the items after the transform has been applied; must be a [[Numeric]] type.
       * @return
       */
-    def sumBy[B](f: A => B)(implicit x: Numeric[B]): B = sequence.foldLeft(x.zero) { case (left, right) => x.plus(left, f(right)) }
+    def sumBy[B](f: A => B)(implicit x: Numeric[B]): B = sequence.iterator.foldLeft(x.zero) { case (left, right) => x.plus(left, f(right)) }
   }
 
   /**

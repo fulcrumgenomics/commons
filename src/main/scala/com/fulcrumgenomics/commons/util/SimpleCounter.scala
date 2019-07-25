@@ -31,7 +31,7 @@ object SimpleCounter {
   /** Generates a counter that has counted all the objects provided. */
   def apply[T](ts: IterableOnce[T])(implicit tt: TypeTag[T]) : SimpleCounter[T] = {
     val counter = new SimpleCounter[T]
-    ts.foreach(counter.count)
+    ts.iterator.foreach(counter.count)
     counter
   }
 }
