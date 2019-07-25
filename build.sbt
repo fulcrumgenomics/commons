@@ -130,3 +130,14 @@ lazy val root = Project(id="commons", base=file("."))
       }
     }
   )
+  .settings(
+    // Adds a `src/main/scala-2.13+` source directory for Scala 2.13 and newer
+    // and a `src/main/scala-2.12-` source directory for Scala version older than 2.13
+    unmanagedSourceDirectories in Compile += {
+      val sourceDir = (sourceDirectory in Compile).value
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
+        case _                       => sourceDir / "scala-2.12-"
+      }
+    }
+  )

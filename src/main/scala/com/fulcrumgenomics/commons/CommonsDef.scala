@@ -44,7 +44,7 @@ import scala.util.{Failure, Success, Try}
   * New methods, types and objects should not be added to this class lightly as they
   * will pollute the namespace of any classes which import it.
   */
-class CommonsDef {
+trait CommonsDef extends Compat {
   /** An exception that implies that code is unreachable. */
   private class UnreachableException(message: String) extends IllegalStateException(message)
 

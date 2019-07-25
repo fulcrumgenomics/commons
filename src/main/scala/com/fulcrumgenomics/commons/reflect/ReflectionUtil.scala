@@ -26,12 +26,11 @@ package com.fulcrumgenomics.commons.reflect
 import java.lang.reflect.{Constructor, InvocationTargetException}
 import java.nio.file.Path
 
-import com.fulcrumgenomics.commons.io.PathUtil
 import com.fulcrumgenomics.commons.CommonsDef._
+import com.fulcrumgenomics.commons.io.PathUtil
 
-import scala.language.postfixOps
-import scala.annotation.{ClassfileAnnotation, tailrec}
 import scala.collection.mutable
+import scala.language.postfixOps
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
@@ -155,7 +154,7 @@ object ReflectionUtil {
     * Returns true if the symbol (class, field, arg) is annotated with a scala classfile annotation
     * of the provided type, otherwise returns false.
     */
-  def hasScalaAnnotation[A <: ClassfileAnnotation](sym: Symbol)(implicit evidence: ru.TypeTag[A]): Boolean = {
+  def hasScalaAnnotation[A <: ConstantAnnotation](sym: Symbol)(implicit evidence: ru.TypeTag[A]): Boolean = {
     val annotationType = mirror.typeOf[A]
     sym.annotations.exists(a => a.tree.tpe == annotationType)
   }
@@ -164,7 +163,7 @@ object ReflectionUtil {
     * Returns true if the class of type C the symbol is annotated with a scala classfile annotation
     * of type A, otherwise returns false.
     */
-  def hasScalaAnnotation[A <: ClassfileAnnotation, C <: Any](implicit evA: ru.TypeTag[A], evC: ru.TypeTag[C]): Boolean = {
+  def hasScalaAnnotation[A <: ConstantAnnotation, C <: Any](implicit evA: ru.TypeTag[A], evC: ru.TypeTag[C]): Boolean = {
     hasScalaAnnotation[A](mirror.typeOf[C].typeSymbol)
   }
 
@@ -173,7 +172,7 @@ object ReflectionUtil {
     * preferred when, in code, the _type_ of class is known directly. Otherwise see the version which takes
     * an annotated symbol instead of a type.
     * */
-  def findScalaAnnotation[A <: ClassfileAnnotation, C <: Any](implicit evA: ru.TypeTag[A], evC: ru.TypeTag[C]): Option[A] = {
+  def findScalaAnnotation[A <: ConstantAnnotation, C <: Any](implicit evA: ru.TypeTag[A], evC: ru.TypeTag[C]): Option[A] = {
     findScalaAnnotation[A](mirror.typeOf[C].typeSymbol)
   }
 
@@ -182,7 +181,7 @@ object ReflectionUtil {
     * with the specified annotation, None is returned. If it is annotated then the annotation value is reified
     * and an instance returned.
     */
-  def findScalaAnnotation[A <: ClassfileAnnotation](sym: Symbol)(implicit evidence: ru.TypeTag[A]): Option[A] = {
+  def findScalaAnnotation[A <: ConstantAnnotation](sym: Symbol)(implicit evidence: ru.TypeTag[A]): Option[A] = {
     val annotationType = mirror.typeOf[A]
     val annotationOption = sym.annotations.find(a => a.tree.tpe == annotationType)
     annotationOption.map(ann => {
