@@ -103,7 +103,7 @@ class LoggerTest extends UnitSpec with LazyLogging with BeforeAndAfterEach with 
     val pw = new PrintStream(stream)
     logger.out = Some(pw)
     logger.debug("Arg!")
-    stream.toString shouldBe 'empty
+    stream.toString.isEmpty shouldBe true
   }
 
   it should "have a logger when mixing in LazyLogging" in {

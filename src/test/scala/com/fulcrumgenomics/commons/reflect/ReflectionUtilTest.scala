@@ -26,14 +26,12 @@ package com.fulcrumgenomics.commons.reflect
 import java.util
 import java.util.concurrent.TimeUnit
 
+import com.fulcrumgenomics.commons.CommonsDef._
 import com.fulcrumgenomics.commons.io.PathUtil
-import com.fulcrumgenomics.commons.util.{LogLevel, UnitSpec}
 import com.fulcrumgenomics.commons.reflect.ReflectionUtilTest.SecondaryConstructor
+import com.fulcrumgenomics.commons.util.{LogLevel, UnitSpec}
 
-import scala.annotation.ClassfileAnnotation
 import scala.reflect.runtime.{universe => ru}
-import scala.reflect.runtime.universe._
-import scala.reflect.ClassTag
 import scala.util.Success
 
 object ReflectionUtilTest {
@@ -397,13 +395,13 @@ class ReflectionUtilTest extends UnitSpec {
 
   "ReflectionUtil.enumOptions" should "return the options for an enum" in {
     val options = ReflectionUtil.enumOptions(classOf[GoodEnum])
-    options shouldBe 'success
+    options.isSuccess shouldBe true
     options.get should contain (GoodEnum.GOOD)
     options.get should contain (GoodEnum.BOY)
   }
 
   it should "fail when there are no options for an enum" in {
-    ReflectionUtil.enumOptions(classOf[BadEnum]) shouldBe 'failure
+    ReflectionUtil.enumOptions(classOf[BadEnum]).isFailure shouldBe true
   }
 
   "ReflectionUtil.sealedTraitOptions" should "find the possible values in a sealed trait/case object hierarchy with a values method" in {
@@ -417,11 +415,11 @@ class ReflectionUtilTest extends UnitSpec {
   }
 
   it should "fail when the class is not a sealed trait" in {
-    ReflectionUtil.sealedTraitOptions(classOf[GoodEnum]) shouldBe 'failure
+    ReflectionUtil.sealedTraitOptions(classOf[GoodEnum]).isFailure shouldBe true
   }
 
   it should "fail when the sub-classes are not case objects" in {
-    ReflectionUtil.sealedTraitOptions(classOf[CaseClasses]) shouldBe 'failure
+    ReflectionUtil.sealedTraitOptions(classOf[CaseClasses]).isFailure shouldBe true
   }
 
   "ReflectionUtil.buildUnitFromString" should "throw an Exception when an unknown enum value is given" in {
@@ -433,7 +431,7 @@ class ReflectionUtilTest extends UnitSpec {
 
 
 /** Annotation that is used in testing the findAnnotation method (has to be outer class). */
-case class Ann(s:String = "foo", i:Int = 42, b:Boolean=false) extends ClassfileAnnotation
+case class Ann(s:String = "foo", i:Int = 42, b:Boolean=false) extends ConstantAnnotation
 @Ann class NoValues
 @Ann(s="Hello") class Hello
 @Ann(s="Hello", i=101, b=true) class Hello101True
@@ -441,23 +439,23 @@ case class Ann(s:String = "foo", i:Int = 42, b:Boolean=false) extends ClassfileA
 @Ann(s=java.util.jar.JarFile.MANIFEST_NAME, i=Integer.MAX_VALUE) class WithConstRefs
 
 /* Purposefully not a case class, to test both case and non-case class annotations. */
-class EnumAnn(val e:TimeUnit= TimeUnit.MINUTES) extends ClassfileAnnotation {
+class EnumAnn(val e:TimeUnit= TimeUnit.MINUTES) extends ConstantAnnotation {
   override def equals(that: scala.Any): Boolean = this.e == that.asInstanceOf[EnumAnn].e
 }
 @EnumAnn class EnumAnnotated
 @EnumAnn(e=TimeUnit.DAYS) class EnumAnnotatedWaiting
 
-case class InnerEnumAnn(state: Thread.State = Thread.State.NEW) extends ClassfileAnnotation
+case class InnerEnumAnn(state: Thread.State = Thread.State.NEW) extends ConstantAnnotation
 @InnerEnumAnn(state=Thread.State.BLOCKED) class InnerEnumAnnotated
 
-case class ArrayAnn(ss: Array[String] = Array()) extends ClassfileAnnotation {
+case class ArrayAnn(ss: Array[String] = Array()) extends ConstantAnnotation {
   override def equals(that: scala.Any): Boolean = this.ss.toSeq == that.asInstanceOf[ArrayAnn].ss.toSeq
   override def toString: String = "@ArrayAnn(ss=" + ss.mkString("[", ", ", "]") + ")"
 }
 @ArrayAnn class ArrWithDefault
 @ArrayAnn(ss=Array("foo", "bar", "splat")) class ArrWithElems
 
-case class ClassAnn(c: Class[_] = classOf[Any]) extends ClassfileAnnotation
+case class ClassAnn(c: Class[_] = classOf[Any]) extends ConstantAnnotation
 @ClassAnn(c=classOf[Thread]) class ClassAnnotated
 @Ann object SomeEnum extends Enumeration {
   val Mon,Tue,Wed,Thu,Fri = Value
@@ -492,19 +490,19 @@ class ReflectUtilAnnotationTest extends UnitSpec {
   it should "work with Java enums" in {
     ReflectionUtil.findScalaAnnotation[EnumAnn,EnumAnnotated] shouldBe Some(new EnumAnn())
     ReflectionUtil.findScalaAnnotation[EnumAnn,EnumAnnotatedWaiting] shouldBe Some(new EnumAnn(TimeUnit.DAYS))
-    ReflectionUtil.findScalaAnnotation[InnerEnumAnn,InnerEnumAnnotated] shouldBe Some(new InnerEnumAnn(Thread.State.BLOCKED))
+    ReflectionUtil.findScalaAnnotation[InnerEnumAnn,InnerEnumAnnotated] shouldBe Some(InnerEnumAnn(Thread.State.BLOCKED))
   }
 
   it should "work with an array parameter with default value" in {
-    ReflectionUtil.findScalaAnnotation[ArrayAnn,ArrWithDefault] shouldBe Some(new ArrayAnn())
+    ReflectionUtil.findScalaAnnotation[ArrayAnn,ArrWithDefault] shouldBe Some(ArrayAnn())
   }
 
   it should "work with an array parameter with one value" in {
-    ReflectionUtil.findScalaAnnotation[ArrayAnn,ArrWithElems] shouldBe Some(new ArrayAnn(ss=Array("foo", "bar", "splat")))
+    ReflectionUtil.findScalaAnnotation[ArrayAnn,ArrWithElems] shouldBe Some(ArrayAnn(ss=Array("foo", "bar", "splat")))
   }
 
   it should "work with Class values in annotations" in {
-    ReflectionUtil.findScalaAnnotation[ClassAnn,ClassAnnotated] shouldBe Some(new ClassAnn(c=classOf[Thread]))
+    ReflectionUtil.findScalaAnnotation[ClassAnn,ClassAnnotated] shouldBe Some(ClassAnn(c=classOf[Thread]))
   }
 
   it should "work with Scala Enumerations" in {
@@ -518,7 +516,7 @@ class ReflectUtilAnnotationTest extends UnitSpec {
 
   "ReflectionUtil.findJavaAnnotation" should "return the annotation on a class" in {
     val value = ReflectionUtil.findJavaAnnotation(clazz=classOf[ClassJavaAnnotation], annotationClazz=classOf[TestJavaAnnotation])
-    value shouldBe 'defined
+    value.isDefined shouldBe true
     //value.get.getClass shouldBe classOf[TestJavaAnnotation]
     value.map(_.placeholder()) shouldBe Some("value")
   }

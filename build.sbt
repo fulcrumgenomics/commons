@@ -113,8 +113,9 @@ lazy val root = Project(id="commons", base=file("."))
   .settings(description := "Scala commons for Fulcrum Genomics.")
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe"   %  "config"        % "1.3.2",
-      "org.scala-lang" %  "scala-reflect" % scalaVersion.value,
+      "com.typesafe"           %  "config"                  % "1.3.2",
+      "org.scala-lang"         %  "scala-reflect"           % scalaVersion.value,
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
       //---------- Test libraries -------------------//
       "org.scalatest"  %% "scalatest"     % "3.0.8"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
@@ -126,6 +127,17 @@ lazy val root = Project(id="commons", base=file("."))
           Seq("org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0")
         case _ =>
           Seq()
+      }
+    }
+  )
+  .settings(
+    // Adds a `src/main/scala-2.13+` source directory for Scala 2.13 and newer
+    // and a `src/main/scala-2.12-` source directory for Scala version older than 2.13
+    unmanagedSourceDirectories in Compile += {
+      val sourceDir = (sourceDirectory in Compile).value
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
+        case _                       => sourceDir / "scala-2.12-"
       }
     }
   )

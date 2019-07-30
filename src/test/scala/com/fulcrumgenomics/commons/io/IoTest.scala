@@ -152,7 +152,7 @@ class IoTest extends UnitSpec {
   }
 
   it should "return None if no parent was found" in {
-    Io.findFirstExtentParent(PathUtil.pathTo("/")) shouldBe 'empty
+    Io.findFirstExtentParent(PathUtil.pathTo("/")).isEmpty shouldBe true
   }
 
   "Io.writeLines" should "write lines to a file that can be read back." in {

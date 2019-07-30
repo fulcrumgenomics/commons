@@ -130,9 +130,9 @@ class CommonsDefTest extends UnitSpec {
   }
 
   "CommonsDef.maxN" should "return the maximum N elements" in {
-    Seq.empty[Int].maxN(0) shouldBe 'empty
-    Seq(1,2,3,4).maxN(0) shouldBe 'empty
-    Seq.empty[Int].maxN(1) shouldBe 'empty
+    Seq.empty[Int].maxN(0).isEmpty shouldBe true
+    Seq(1,2,3,4).maxN(0).isEmpty shouldBe true
+    Seq.empty[Int].maxN(1).isEmpty shouldBe true
     val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
     val sorted = seq.sortBy(s => -s)
     Range.inclusive(start=1, end=seq.length*2).foreach { n => // tests asking both fewer and more than the # of elements
@@ -142,9 +142,9 @@ class CommonsDefTest extends UnitSpec {
   }
 
   "CommonsDef.maxNBy" should "return the maximum N elements compared by a given method" in {
-    Seq.empty[Int].maxNBy(0, identity) shouldBe 'empty
-    Seq(1,2,3,4).maxNBy(0, identity) shouldBe 'empty
-    Seq.empty[Int].maxNBy(1, identity) shouldBe 'empty
+    Seq.empty[Int].maxNBy(0, identity).isEmpty shouldBe true
+    Seq(1,2,3,4).maxNBy(0, identity).isEmpty shouldBe true
+    Seq.empty[Int].maxNBy(1, identity).isEmpty shouldBe true
     val seq    = Seq(5,3,7,1,2,5,8,12,14,22)
     val sorted = seq.sorted
     Range.inclusive(start=1, end=seq.length*2).foreach { n => // tests asking both fewer and more than the # of elements
@@ -201,21 +201,21 @@ class CommonsDefTest extends UnitSpec {
   }
 
   "sumBy[B]" should "sum a non-empty sequence of values" in {
-    val traversable     = Traversable("1", "2", "3")
+    val iterable        = Iterable("1", "2", "3")
     val iterator        = Iterator("1", "2", "3")
     val list            = List("1", "2", "3")
 
-    traversable.sumBy(_.toInt) shouldBe 6
+    iterable.sumBy(_.toInt) shouldBe 6
     iterator.sumBy(_.toInt) shouldBe 6
     list.sumBy(_.toInt) shouldBe 6
   }
 
   "sumBy[B]" should "sum an empty sequence" in {
-    val traversable     = Traversable.empty[String]
+    val iterable        = Iterable.empty[String]
     val iterator        = Iterator[String]()
     val list            = List.empty[String]
 
-    traversable.sumBy(_.toInt) shouldBe 0
+    iterable.sumBy(_.toInt) shouldBe 0
     iterator.sumBy(_.toInt) shouldBe 0
     list.sumBy(_.toInt) shouldBe 0
   }

@@ -28,6 +28,7 @@ import com.fulcrumgenomics.commons.CommonsDef._
 import com.fulcrumgenomics.commons.io.Io
 import com.fulcrumgenomics.commons.reflect.ReflectionUtil
 
+import scala.collection.compat._
 import scala.reflect.runtime.{universe => ru}
 
 /**
@@ -89,11 +90,11 @@ object DelimitedDataParser {
     apply(Io.toSource(path).getLines(), delimiter=delimiter, header=header)
 
   /** Constructs a DelimitedDataParser for a sequence of lines. */
-  def apply(lines: TraversableOnce[String], delimiter: Char): DelimitedDataParser =
+  def apply(lines: IterableOnce[String], delimiter: Char): DelimitedDataParser =
     apply(lines, delimiter=delimiter, header=Seq.empty)
 
   /** Constructs a DelimitedDataParser for a sequence of lines. */
-  def apply(lines: TraversableOnce[String], delimiter: Char, header: Seq[String]): DelimitedDataParser =
+  def apply(lines: IterableOnce[String], delimiter: Char, header: Seq[String]): DelimitedDataParser =
     new DelimitedDataParser(lines, delimiter=delimiter, header=header)
 }
 
@@ -106,13 +107,13 @@ object DelimitedDataParser {
   * @param trimFields whether individual fields should have their String values trimmed
   * @param header the header names for the columns of delimited data. If empty, the first line should contain the header names.
   */
-class DelimitedDataParser(lines: TraversableOnce[String],
+class DelimitedDataParser(lines: IterableOnce[String],
                           val delimiter: Char,
                           val ignoreBlankLines: Boolean = DelimitedDataParser.DefaultBlankPolicy,
                           val trimFields: Boolean = DelimitedDataParser.DefaultTrim,
                           val header: Seq[String] = Seq.empty) extends Iterator[Row] with LazyLogging {
 
-  private val _lines = if (ignoreBlankLines) lines.toIterator.filter(_.nonEmpty) else lines.toIterator
+  private val _lines = if (ignoreBlankLines) lines.iterator.filter(_.nonEmpty) else lines.iterator
 
   // An array of the headers
   private val _headers = {

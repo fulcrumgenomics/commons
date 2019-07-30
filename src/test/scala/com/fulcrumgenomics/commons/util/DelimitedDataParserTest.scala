@@ -170,7 +170,7 @@ class DelimitedDataParserTest extends UnitSpec {
       |foo,bar,splat
       |one,uno,1
       |two,dos ,2
-    """.stripMargin.trim.lines.filter(_.nonEmpty).toIndexedSeq
+    """.stripMargin.trim.linesIterator.filter(_.nonEmpty).toIndexedSeq
     val parser = csv(data)
     var rows = 0
     parser.foreach { row =>

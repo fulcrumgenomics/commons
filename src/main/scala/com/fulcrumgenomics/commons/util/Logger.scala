@@ -27,6 +27,8 @@ import java.io.{PrintStream, PrintWriter, StringWriter}
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import scala.collection.compat._
+
 /** Companion object for the Logger class that holds the system-wide log level, and a PrintWriter to write to. */
 object Logger {
   var level = LogLevel.Info
@@ -47,11 +49,11 @@ class Logger(clazz : Class[_]) {
   var out: Option[PrintStream] = None
 
   /** Checks to see if a message should be emitted given the current log level, and then emits atomically. */
-  protected def emit(l: LogLevel, parts: TraversableOnce[Any]) : Unit = {
+  protected def emit(l: LogLevel, parts: IterableOnce[Any]) : Unit = {
     if (l.compareTo(Logger.level) >= 0) {
       val builder = new StringBuilder(256)
       builder.append("[").append(fmt.format(new Date())).append(" | ").append(name).append(" | ").append(l.toString).append("] ")
-      parts.foreach(part => builder.append(part))
+      parts.iterator.foreach(part => builder.append(part))
       this.out match {
         case Some(o) => o.println(builder.toString())
         case _ => Logger.out.println(builder.toString())

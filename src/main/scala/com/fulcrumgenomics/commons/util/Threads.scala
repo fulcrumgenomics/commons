@@ -25,7 +25,7 @@
 
 package com.fulcrumgenomics.commons.util
 
-import com.fulcrumgenomics.commons.CommonsDef.javaIterableToIterator
+import com.fulcrumgenomics.commons.CommonsDef._
 
 object Threads {
 
@@ -48,6 +48,6 @@ object Threads {
       *
       * Care should be taken accessing the iterator since objects may be in use by other threads.
       */
-    def iterator: Iterator[A] = all.toIterator
+    def iterator: Iterator[A] = all.iterator()
   }
 }
