@@ -67,6 +67,12 @@ class AsyncRunnableTest extends UnitSpec with OptionValues {
     runnable.done shouldBe true
   }
 
+  it should "have a custom name" in {
+    val runnable = new TestRunnable()
+    val thread = runnable.thread(name = Some("Custom"))
+    thread.getName shouldBe "Custom"
+  }
+
   "AsyncRunnable.start" should "not be able to be called twice" in {
     val runnable = new TestRunnable().start()
     an[Exception] should be thrownBy runnable.start()
