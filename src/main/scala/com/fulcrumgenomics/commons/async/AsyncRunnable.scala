@@ -111,9 +111,9 @@ trait AsyncRunnable extends Runnable {
   val name: String = AsyncRunnable.nextName(this)
 
   /** Creates a new thread wrapping this runnable; the thread is not started. */
-  final def thread(): Thread = {
+  final def thread(name: Option[String] = None): Thread = {
     require(!this.started, "Already started.")
-    new Thread(this, this.name)
+    new Thread(this, name.getOrElse(this.name))
   }
 
   /** Starts this [[Runnable]] in a daemon thread.
@@ -123,7 +123,7 @@ trait AsyncRunnable extends Runnable {
     */
   final def start(name: Option[String] = None, daemon: Boolean = true): this.type = {
     require(!this.started, "Already started.")
-    val t = thread()
+    val t = thread(name = name)
     t.setDaemon(daemon)
     t.start()
     this.startedLatch.countDown()
