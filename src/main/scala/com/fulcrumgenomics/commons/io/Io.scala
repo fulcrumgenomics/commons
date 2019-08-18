@@ -24,6 +24,7 @@
 package com.fulcrumgenomics.commons.io
 
 import java.io._
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 
 import com.fulcrumgenomics.commons.CommonsDef._
@@ -49,8 +50,13 @@ trait IoUtil {
 
   /** Creates a new InputStream to read from the supplied path. */
   def toInputStream(path: Path) : InputStream = {
-    val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
-    new BufferedInputStream(stream, bufferSize)
+    if (Files.isSameFile(path, Io.StdIn)) System.in
+    else {
+      val stream = Files.newInputStream(path)
+      val attrs  = Files.readAttributes(path, classOf[BasicFileAttributes])
+      if (!attrs.isRegularFile && !attrs.isSymbolicLink && attrs.isOther) stream
+      else new BufferedInputStream(stream, bufferSize)
+    }
   }
 
   /** Creates a new BufferedReader to read from the supplied path. */

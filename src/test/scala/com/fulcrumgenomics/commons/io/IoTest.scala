@@ -23,10 +23,15 @@
  */
 package com.fulcrumgenomics.commons.io
 
-import java.io.{BufferedOutputStream, FileOutputStream}
+import java.io.{BufferedOutputStream, FileOutputStream, PrintStream}
 import java.nio.file.{Files, Path, Paths}
+import java.util.concurrent.TimeUnit
 
 import com.fulcrumgenomics.commons.util.UnitSpec
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 /**
  * Tests for various methods in the Io class
@@ -52,6 +57,18 @@ class IoTest extends UnitSpec {
     path
   }
 
+  val hasMkfifo: Boolean = {
+    val pipeProcess = new ProcessBuilder("command", "-v", "mkfifo").start()
+    pipeProcess.waitFor(5, TimeUnit.SECONDS) shouldBe true
+    pipeProcess.exitValue() == 0
+  }
+
+  def pipe(path: Path, lines: Seq[String]): Unit = {
+    val pipeProcess = new ProcessBuilder("mkfifo", s"${path.toAbsolutePath}").start()
+    pipeProcess.waitFor(5, TimeUnit.SECONDS) shouldBe true
+    pipeProcess.exitValue() shouldBe 0
+  }
+
   "Io.assertReadable" should "not throw an exception for extent files" in {
     val f1 = tmpfile(); val f2 = tmpfile(); val f3 = tmpfile()
     Io.assertReadable(f1)
@@ -61,6 +78,15 @@ class IoTest extends UnitSpec {
   it should "not throw an exception for special files" in {
     Io.assertReadable(Io.StdIn)
   }
+
+  it should "not throw an exception for Unix fifos" in { if (hasMkfifo) {
+    val lines       = Seq("foo", "bar")
+    val pipePath    = Paths.get("test1").toAbsolutePath
+    Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
+    pipe(pipePath, lines)
+    Io.assertReadable(pipePath)
+    Files.delete(pipePath)
+  }}
 
   it should "throw an exception for when file isn't readable" in {
     val nullpath: Path = null
@@ -187,6 +213,17 @@ class IoTest extends UnitSpec {
   it should "fail when the resource does not exist" in {
     an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
   }
+
+  it should "read Unix fifos" in { if (hasMkfifo) {
+    val lines       = Seq("foo", "bar")
+    val pipePath    = Paths.get("test2").toAbsolutePath
+    Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
+    pipe(pipePath, lines)
+    val writeFuture = Future { Io.writeLines(pipePath, lines); true }
+    Io.readLines(pipePath).toList should contain theSameElementsInOrderAs lines
+    Await.result(writeFuture, Duration(1, TimeUnit.SECONDS)) shouldBe true
+    Files.delete(pipePath)
+  }}
 
   "Io.readBytesFromResource" should "correctly read binary data from a resource" in {
     val expected = Range.inclusive(Byte.MinValue, Byte.MaxValue).map(_.toByte).toArray
