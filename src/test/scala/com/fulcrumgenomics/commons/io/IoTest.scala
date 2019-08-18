@@ -24,7 +24,7 @@
 package com.fulcrumgenomics.commons.io
 
 import java.io.{BufferedOutputStream, FileOutputStream, PrintStream}
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, FileSystems, Path, Paths}
 import java.util.concurrent.TimeUnit
 
 import com.fulcrumgenomics.commons.util.UnitSpec
@@ -57,11 +57,7 @@ class IoTest extends UnitSpec {
     path
   }
 
-  val hasMkfifo: Boolean = {
-    val pipeProcess = new ProcessBuilder("command", "-v", "mkfifo").start()
-    pipeProcess.waitFor(5, TimeUnit.SECONDS) shouldBe true
-    pipeProcess.exitValue() == 0
-  }
+  val hasMkfifo: Boolean = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 
   def pipe(path: Path, lines: Seq[String]): Unit = {
     val pipeProcess = new ProcessBuilder("mkfifo", s"${path.toAbsolutePath}").start()
