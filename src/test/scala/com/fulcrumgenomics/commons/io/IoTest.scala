@@ -210,7 +210,7 @@ class IoTest extends UnitSpec {
     an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
   }
 
-  it should "read Unix fifos" in { if (hasMkfifo) {
+  "Io.readLines" should "read Unix fifos" in { if (hasMkfifo) {
     val lines       = Seq("foo", "bar")
     val pipePath    = Paths.get("test2").toAbsolutePath
     Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
