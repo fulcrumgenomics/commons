@@ -46,7 +46,7 @@ trait CommandLineTool extends LazyLogging {
     * scala> import com.fulcrumgenomics.commons.io._
     * scala> val TestArgs = Seq("--version")
     * scala> val Executable = "Rscript"
-    * scala> Rscript.execCommand(Executable +: TestArgs:_*)
+    * scala> Rscript.execCommand(Executable +: TestArgs: _*)
     * res1: scala.util.Try[scala.collection.mutable.ListBuffer[String]] = Success(ListBuffer(R scripting front-end version 3.5.1 (2018-07-02)))
     * }}}
     * */
@@ -92,7 +92,7 @@ trait ScriptRunner {
     * @param args a variable list of arguments to pass to the script
     */
   def execIfAvailable(scriptResource: String, args: String*): Unit =
-    try { if (Available) exec(scriptResource, args:_*) }
+    try { if (Available) exec(scriptResource, args: _*) }
     catch { case e: Exception => throw new Exception(s"Cannot execute script from $scriptResource with args:$args") }
 
   /** Executes a script stored at a Path if the this executable is available.
@@ -110,7 +110,7 @@ trait ScriptRunner {
     * @param scriptResource the name of the script resource on the classpath
     * @param args a variable list of arguments to pass to the script
     */
-  def exec(scriptResource: String, args: String*): Unit = exec(writeResourceToTempFile(scriptResource), args:_*)
+  def exec(scriptResource: String, args: String*): Unit = exec(writeResourceToTempFile(scriptResource), args: _*)
 
   /** Executes a script from the filesystem Path.
     *
@@ -156,7 +156,7 @@ trait Versioned {
   val TestArgs: Seq[String] = Seq(VersionFlag)
 
   /** Returns version of this executable. */
-  lazy val Version: Try[ListBuffer[String]] = execCommand(Executable +: TestArgs:_*)
+  lazy val Version: Try[ListBuffer[String]] = execCommand(Executable +: TestArgs: _*)
 }
 
 /** Defines methods used to check if specific modules are installed with the executable . */
@@ -196,11 +196,11 @@ object Rscript extends CommandLineTool with Versioned with Modular with ScriptRu
     * */
   def TestModuleCommand(module: String): Seq[String] = Seq(Executable, "-e", s"stopifnot(require('$module'))")
 
-  /** Only returns true if R exists and ggplot2 is installed */
-  override lazy val Available: Boolean = {
-    val ToolAvailable: Boolean   = execCommand(Executable +: Seq(VersionFlag):_*).isSuccess
-    Seq(ToolAvailable, ModuleAvailable("ggplot2")).forall( _ == true)
-  }
+  /** Only returns true if Rscript exists. */
+  override lazy val Available: Boolean = execCommand(Executable, VersionFlag).isSuccess
+
+  /** Only returns true if both Rscript exists and the library ggplot2 is installed. */
+  lazy val ggplot2Available: Boolean = Available && ModuleAvailable("ggplot2")
 }
 
 /** Defines tools to test various version of python executables */
