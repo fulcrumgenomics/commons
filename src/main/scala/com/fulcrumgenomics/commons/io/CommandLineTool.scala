@@ -214,7 +214,7 @@ object Rscript extends CommandLineTool with Versioned with Modular with ScriptRu
 }
 
 /** Defines tools to test various version of python executables */
-class Python (val pythonVersion: String, val executable: String = "python") extends
+class Python private(val pythonVersion: String, val executable: String = "python") extends
   CommandLineTool with Versioned with Modular with ScriptRunner {
   val suffix: FilenameSuffix = ".py"
   def TestModuleCommand(module: String): Seq[String] = Seq(executable, "-c", s"import $module")
