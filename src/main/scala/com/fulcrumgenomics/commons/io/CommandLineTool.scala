@@ -214,16 +214,18 @@ object Rscript extends CommandLineTool with Versioned with Modular with ScriptRu
 }
 
 /** Defines tools to test various version of python executables */
-class Python private(val pythonVersion: String, val executable: String = "python") extends
-  CommandLineTool with Versioned with Modular with ScriptRunner {
-  val suffix: FilenameSuffix = ".py"
+trait Python extends CommandLineTool with Versioned with Modular with ScriptRunner {
+  val executable: String                             = "python"
+  val suffix: FilenameSuffix                         = ".py"
   def TestModuleCommand(module: String): Seq[String] = Seq(executable, "-c", s"import $module")
 }
 
-/** Objects specific for different Python versions.  */
-object Python {
-  def apply(pythonVersion : String = "", executable: String = "python" ) =
-    new Python(pythonVersion, f"$executable$pythonVersion")
-  val Python2 = new Python("2")
-  val Python3 = new Python("3")
-}
+/** Major Python versions as traits.  */
+trait Python2 extends Python { override val executable = "python2"}
+trait Python3 extends Python { override val executable = "python3"}
+
+/** Popular major and minor Python versions.  */
+object Python2 extends Python2
+object Python3 extends Python3
+object Python2_7 extends Python2  { override val executable: String = "python2.7" }
+object Python3_7 extends Python3  { override val executable: String = "python3.7" }
