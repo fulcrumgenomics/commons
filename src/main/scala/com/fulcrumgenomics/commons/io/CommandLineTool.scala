@@ -25,8 +25,10 @@ package com.fulcrumgenomics.commons.io
 
 import java.nio.file.Path
 
+import com.fulcrumgenomics.commons.CommonsDef
 import com.fulcrumgenomics.commons.util.LazyLogging
 import com.fulcrumgenomics.commons.CommonsDef._
+//import com.fulcrumgenomics.commons.io.Python.executable
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -42,7 +44,7 @@ trait CommandLineTool extends LazyLogging {
   /** The name of the executable. */
   val executable: String
 
-  /** Arguments for the above executable.
+  /** Arguments for the executable.
     *
     * For example, to run `Rscript --version`:
     * {{{
@@ -212,13 +214,16 @@ object Rscript extends CommandLineTool with Versioned with Modular with ScriptRu
 }
 
 /** Defines tools to test various version of python executables */
-trait Python extends CommandLineTool with Versioned with Modular with ScriptRunner {
-  val executable: String
+class Python (val pythonVersion: String, val executable: String = "python") extends
+  CommandLineTool with Versioned with Modular with ScriptRunner {
   val suffix: FilenameSuffix = ".py"
   def TestModuleCommand(module: String): Seq[String] = Seq(executable, "-c", s"import $module")
 }
 
 /** Objects specific for different Python versions.  */
-object Python extends Python  { val executable: String = "python" }
-object Python2 extends Python { val executable: String = "python2" }
-object Python3 extends Python { val executable: String = "python3" }
+object Python {
+  def apply(pythonVersion : String = "", executable: String = "python" ) =
+    new Python(pythonVersion, f"$executable$pythonVersion")
+  val Python2 = new Python("2")
+  val Python3 = new Python("3")
+}
