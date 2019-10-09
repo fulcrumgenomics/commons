@@ -73,7 +73,7 @@ object SystemUtil {
   lazy val IntelCompressionLibrarySupported: Boolean = {
     if (!SystemUtil.IsOsLinux && !SystemUtil.IsOsMac) false
     else if (SystemUtil.isOsArch(name = "ppc64le")) false
-    else if (SystemUtil.IsOsMac && SystemUtil.isOsVersion("10\\.14\\.".r)) false // FIXME: https://github.com/Intel-HLS/GKL/issues/101
+    else if (SystemUtil.IsOsMac && SystemUtil.isOsVersion("10\\.14\\..+".r)) false // FIXME: https://github.com/Intel-HLS/GKL/issues/101
     else true
   }
 }
