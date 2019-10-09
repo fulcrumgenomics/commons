@@ -61,13 +61,13 @@ object SystemUtil {
   def isOsArch(name: String): Boolean = OsArch.contains(name)
 
   /** Returns true if the architecture matches the given regular expression, false otherwise. */
-  def isOsArch(regex: Regex): Boolean = OsArch.exists(v => regex.findFirstMatchIn(v).isDefined)
+  def isOsArch(regex: Regex): Boolean = OsArch.exists(a => regex.pattern.matcher(a).matches)
 
   /** Returns true if the operating system version is the given name, false otherwise. */
   def isOsVersion(name: String): Boolean = OsVersion.contains(name)
 
   /** Returns true if the operating system version matches the given regular expression, false otherwise. */
-  def isOsVersion(regex: Regex): Boolean = OsVersion.exists(v => regex.findFirstMatchIn(v).isDefined)
+  def isOsVersion(regex: Regex): Boolean = OsVersion.exists(v => regex.pattern.matcher(v).matches)
 
   /** True if the current system could support the Intel Inflater and Deflater, false otherwise. */
   lazy val IntelCompressionLibrarySupported: Boolean = {

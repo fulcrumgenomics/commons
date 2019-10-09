@@ -56,11 +56,11 @@ class SystemUtilTest extends UnitSpec with OptionValues {
 
     regex(s"$prefix.*".r) shouldBe true
     regex(s"$prefix.".r) shouldBe true
-    regex(prefix.r) shouldBe true
+    regex(prefix.r) shouldBe false
 
     regex(s".*$suffix".r) shouldBe true
     regex(s".$suffix".r) shouldBe true
-    regex(suffix.r) shouldBe true
+    regex(suffix.r) shouldBe false
   }
 
   it should "match the OS version exactly and with a regex" in {
