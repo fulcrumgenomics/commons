@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2019 Fulcrum Genomics
+ * Copyright (c) 2020 Fulcrum Genomics
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,38 +24,24 @@
  */
 
 package com.fulcrumgenomics.commons.util
-import scala.util.matching.Regex
 
+import scala.util.Properties.{isLinux, isMac, propOrNone}
+import scala.util.matching.Regex
 
 /** System utility defaults and methods. Many methods mock functions in `org.apache.commons:commons-lang3`. */
 object SystemUtil {
 
-  /** The operating system name prefixes for Linux */
-  private val LinuxNamePrefixes: Seq[String] = Seq("Linux", "LINUX")
-
-  /** The operating system name prefixes for Mac */
-  private val MacNamePrefixes: Seq[String] = Seq("Mac")
-
-  /** The current operating system name. */
-  lazy val OsName: Option[String] = getSystemProperty(property = "os.name")
-
   /** The current operating system architecture */
-  lazy val OsArch: Option[String] = getSystemProperty(property = "os.arch")
+  lazy val OsArch: Option[String] = safePropOrNone(property = "os.arch")
 
   /** The current operating system version */
-  lazy val OsVersion: Option[String] = getSystemProperty(property = "os.version")
+  lazy val OsVersion: Option[String] = safePropOrNone(property = "os.version")
 
-  /** Gets a system property.  Returns None if not found or we are not allowed to retrieve the property. */
-  def getSystemProperty(property: String): Option[String] = {
-    try { Option(System.getProperty(property)) }
+  /** Gets a system property. Returns None if not found, or if a security manager does not allow us to retrieve the property. */
+  def safePropOrNone(property: String): Option[String] = {
+    try { propOrNone(property) }
     catch { case _: SecurityException => None } // not allowed to look at this property
   }
-
-  /** True if this operating system is Linux, false otherwise. */
-  lazy val IsOsLinux: Boolean = LinuxNamePrefixes.exists(prefix => OsName.exists(_.startsWith(prefix)))
-
-  /** True if this operating system is Mac, false otherwise. */
-  lazy val IsOsMac: Boolean = MacNamePrefixes.exists(prefix => OsName.exists(_.startsWith(prefix)))
 
   /** Returns true if the architecture is the given name, false otherwise. */
   def isOsArch(name: String): Boolean = OsArch.contains(name)
@@ -69,11 +55,11 @@ object SystemUtil {
   /** Returns true if the operating system version matches the given regular expression, false otherwise. */
   def isOsVersion(regex: Regex): Boolean = OsVersion.exists(v => regex.pattern.matcher(v).matches)
 
-  /** True if the current system could support the Intel Inflater and Deflater, false otherwise. */
+  /** True if the current system might support the Intel Inflater and Deflater, false otherwise. */
   lazy val IntelCompressionLibrarySupported: Boolean = {
-    if (!SystemUtil.IsOsLinux && !SystemUtil.IsOsMac) false
-    else if (SystemUtil.isOsArch(name = "ppc64le")) false
-    else if (SystemUtil.IsOsMac && SystemUtil.isOsVersion("10\\.14\\..+".r)) false // FIXME: https://github.com/Intel-HLS/GKL/issues/101
+    if (!isLinux && !isMac) false
+    else if (isOsArch(name = "ppc64le")) false
+    else if (isMac && isOsVersion("10\\.14\\..+".r)) false // FIXME: https://github.com/Intel-HLS/GKL/issues/101
     else true
   }
 }

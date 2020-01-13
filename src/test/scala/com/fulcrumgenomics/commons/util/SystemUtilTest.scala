@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2019 Fulcrum Genomics
+ * Copyright (c) 2020 Fulcrum Genomics
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,15 +31,6 @@ import scala.util.matching.Regex
 
 class SystemUtilTest extends UnitSpec with OptionValues {
 
-  "SystemUtil" should "determine the OS name" in {
-    (SystemUtil.IsOsLinux, SystemUtil.IsOsMac) match {
-      case (true, false)  => ()
-      case (false, true)  => ()
-      case (true,  true)  => throw new IllegalStateException(s"System cannot both be Linux and Mac: ${SystemUtil.OsName}")
-      case (false, false) => throw new IllegalStateException(s"Cannot determine the OS: ${SystemUtil.OsName}")
-    }
-  }
-
   private def matches(original: String, exact: String => Boolean, regex: Regex => Boolean): Unit = {
     original.length should be > 1
 
@@ -63,7 +54,7 @@ class SystemUtilTest extends UnitSpec with OptionValues {
     regex(suffix.r) shouldBe false
   }
 
-  it should "match the OS version exactly and with a regex" in {
+  "SystemUtil" should "match the OS version exactly and with a regex" in {
     matches(SystemUtil.OsVersion.value, s => SystemUtil.isOsVersion(s), r => SystemUtil.isOsVersion(r))
   }
 
