@@ -211,8 +211,9 @@ class IoTest extends UnitSpec {
   }
 
   "Io.readLines" should "read Unix fifos" in { if (hasMkfifo) {
-    val lines       = Seq("foo", "bar")
-    val pipePath    = Paths.get("test2").toAbsolutePath
+    val lines    = Seq("foo", "bar")
+    val pipeDir  = tmpdir()
+    val pipePath = pipeDir.resolve("pipe2")
     Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
     pipe(pipePath, lines)
     val writeFuture = Future { Io.writeLines(pipePath, lines); true }
