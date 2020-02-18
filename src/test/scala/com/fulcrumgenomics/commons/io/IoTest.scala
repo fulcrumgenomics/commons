@@ -76,9 +76,9 @@ class IoTest extends UnitSpec {
   }
 
   it should "not throw an exception for Unix fifos" in { if (hasMkfifo) {
-    val lines       = Seq("foo", "bar")
-    val pipePath    = Paths.get("test1").toAbsolutePath
-    Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
+    val lines    = Seq("foo", "bar")
+    val pipeDir  = tmpdir()
+    val pipePath = pipeDir.resolve("pipe1")
     pipe(pipePath, lines)
     Io.assertReadable(pipePath)
     Files.delete(pipePath)

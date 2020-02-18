@@ -50,6 +50,21 @@ trait IoUtil {
 
   /** Creates a new InputStream to read from the supplied path. */
   def toInputStream(path: Path) : InputStream = {
+    // Developer Note **IMPORTANT**:
+    // Do not wrap pipes in BufferedInputStream, as there is a java bug where seek() is called on the stream.  For
+    // example, we get this exception:
+    //   java.io.IOException: Illegal seek
+    //   at sun.nio.ch.FileDispatcherImpl.seek0(Native Method)
+    //   at sun.nio.ch.FileDispatcherImpl.seek(FileDispatcherImpl.java:76)
+    //   at sun.nio.ch.FileChannelImpl.position(FileChannelImpl.java:264)
+    //   at sun.nio.ch.ChannelInputStream.available(ChannelInputStream.java:116)
+    //   at java.io.BufferedInputStream.read(BufferedInputStream.java:353)
+    //   at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
+    //   at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
+    //   at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)
+    //   at java.io.InputStreamReader.read(InputStreamReader.java:184)
+    //   at java.io.BufferedReader.fill(BufferedReader.java:161)
+    // This is a known issue; see: https://github.com/samtools/htsjdk/issues/1084
     if (Files.isSameFile(path, Io.StdIn)) System.in
     else {
       val stream = Files.newInputStream(path)
