@@ -47,6 +47,7 @@ trait IoUtil {
 
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
+  /** The level compression to use when writing compressed output. */
   def compressionLevel: Int = 5
 
   /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
