@@ -25,6 +25,7 @@ package com.fulcrumgenomics.commons.io
 
 import java.io._
 import java.nio.file.{Files, Path}
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
@@ -46,15 +47,28 @@ trait IoUtil {
 
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
+  def compressionLevel: Int = 5
 
-  /** Creates a new InputStream to read from the supplied path. */
+  /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
   def toInputStream(path: Path) : InputStream = {
-    val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
-    new BufferedInputStream(stream, bufferSize)
+    PathUtil.extensionOf(path) match {
+      case Some(".gz") | Some(".bgz") | Some(".bgzip") =>
+        new GZIPInputStream(Files.newInputStream(path), bufferSize)
+      case _ => {
+        val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
+        new BufferedInputStream(stream, bufferSize)
+      }
+    }
   }
 
-  /** Creates a new BufferedReader to read from the supplied path. */
-  def toOutputStream(path: Path) : OutputStream = new BufferedOutputStream(Files.newOutputStream(path), bufferSize)
+  /** Creates a new OutputStream to read from the supplied path. Automatically handles gzipped files. */
+  def toOutputStream(path: Path) : OutputStream = {
+      PathUtil.extensionOf(path) match {
+        case Some(".gz") => new GZIPOutputStream(Files.newOutputStream(path), bufferSize) { this.`def`.setLevel(compressionLevel) }
+        case _           => new BufferedOutputStream(Files.newOutputStream(path), bufferSize)
+      }
+
+  }
 
   /** Creates a new BufferedWriter to write to the supplied path. */
   def toWriter(path: Path) : BufferedWriter = new BufferedWriter(new OutputStreamWriter(toOutputStream(path)), bufferSize)
