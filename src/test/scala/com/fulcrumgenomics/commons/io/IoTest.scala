@@ -198,7 +198,7 @@ class IoTest extends UnitSpec {
   "Io.toInputStream" should "open a file for gzip writing if it ends with .gz" in {
     val text = "This is a stupid little text fragment for compression. Yay compression!"
     val in   = Seq(text, text, text)
-    val f = Io.makeTempFile("test", ".gz")
+    val f    = Io.makeTempFile("test", ".gz")
     Io.writeLines(f, in)
 
     // Manually read it back as gzipped data
@@ -211,7 +211,7 @@ class IoTest extends UnitSpec {
   "Io.toOutputStream" should "round trip data to a gzipped file if it ends with .gz" in {
     val text = "This is a stupid little text fragment for compression. Yay compression!"
     val in   = Seq(text, text, text)
-    val f = Io.makeTempFile("test", ".gz")
+    val f    = Io.makeTempFile("test", ".gz")
     Io.writeLines(f, in)
     val out = Io.readLines(f).toSeq
     out shouldBe in
