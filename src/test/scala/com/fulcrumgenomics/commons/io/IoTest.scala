@@ -75,14 +75,15 @@ class IoTest extends UnitSpec {
     Io.assertReadable(Io.StdIn)
   }
 
-  it should "not throw an exception for Unix fifos" in { if (hasMkfifo) {
+  it should "not throw an exception for Unix fifos" in { 
+    assume(hasMkfifo, "Canceling Posix specific test.")
     val lines    = Seq("foo", "bar")
     val pipeDir  = tmpdir()
     val pipePath = pipeDir.resolve("pipe1")
     pipe(pipePath, lines)
     Io.assertReadable(pipePath)
     Files.delete(pipePath)
-  }}
+  }
 
   it should "throw an exception for when file isn't readable" in {
     val nullpath: Path = null
@@ -210,7 +211,8 @@ class IoTest extends UnitSpec {
     an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
   }
 
-  "Io.readLines" should "read Unix fifos" in { if (hasMkfifo) {
+  "Io.readLines" should "read Unix fifos" in { 
+    assume(hasMkfifo, "Canceling Posix specific test.")
     val lines    = Seq("foo", "bar")
     val pipeDir  = tmpdir()
     val pipePath = pipeDir.resolve("pipe2")
@@ -220,7 +222,7 @@ class IoTest extends UnitSpec {
     Io.readLines(pipePath).toList should contain theSameElementsInOrderAs lines
     Await.result(writeFuture, Duration(1, TimeUnit.SECONDS)) shouldBe true
     Files.delete(pipePath)
-  }}
+  }
 
   "Io.readBytesFromResource" should "correctly read binary data from a resource" in {
     val expected = Range.inclusive(Byte.MinValue, Byte.MaxValue).map(_.toByte).toArray

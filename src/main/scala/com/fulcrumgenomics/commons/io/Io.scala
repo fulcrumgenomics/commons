@@ -68,8 +68,8 @@ trait IoUtil {
     if (Files.isSameFile(path, Io.StdIn)) System.in
     else {
       val stream = Files.newInputStream(path)
-      val attrs  = Files.readAttributes(path, classOf[BasicFileAttributes])
-      if (!attrs.isRegularFile && !attrs.isSymbolicLink && attrs.isOther) stream
+      val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
+      if (!attrs.isRegularFile && attrs.isOther) stream
       else new BufferedInputStream(stream, bufferSize)
     }
   }
