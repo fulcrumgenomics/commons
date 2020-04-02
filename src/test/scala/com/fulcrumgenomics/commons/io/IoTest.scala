@@ -23,8 +23,9 @@
  */
 package com.fulcrumgenomics.commons.io
 
-import java.io.{BufferedOutputStream, FileOutputStream}
+import java.io.{BufferedOutputStream, BufferedReader, FileInputStream, FileOutputStream, InputStreamReader}
 import java.nio.file.{Files, Path, Paths}
+import java.util.zip.GZIPInputStream
 
 import com.fulcrumgenomics.commons.util.UnitSpec
 
@@ -192,5 +193,27 @@ class IoTest extends UnitSpec {
     val expected = Range.inclusive(Byte.MinValue, Byte.MaxValue).map(_.toByte).toArray
     val actual = Io.readBytesFromResource("/com/fulcrumgenomics/commons/io/to-bytes-from-resource-test.bin")
     actual shouldBe expected
+  }
+
+  "Io.toInputStream" should "open a file for gzip writing if it ends with .gz" in {
+    val text = "This is a stupid little text fragment for compression. Yay compression!"
+    val in   = Seq(text, text, text)
+    val f    = Io.makeTempFile("test", ".gz")
+    Io.writeLines(f, in)
+
+    // Manually read it back as gzipped data
+    val reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f.toFile))))
+    val out = Seq(reader.readLine(), reader.readLine(), reader.readLine())
+    out shouldBe in
+    reader.close()
+  }
+
+  it should "round trip data to a gzipped file if it ends with .gz" in {
+    val text = "This is a stupid little text fragment for compression. Yay compression!"
+    val in   = Seq(text, text, text)
+    val f    = Io.makeTempFile("test", ".gz")
+    Io.writeLines(f, in)
+    val out = Io.readLines(f).toSeq
+    out shouldBe in
   }
 }
