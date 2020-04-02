@@ -208,7 +208,7 @@ class IoTest extends UnitSpec {
     reader.close()
   }
 
-  "Io.toOutputStream" should "round trip data to a gzipped file if it ends with .gz" in {
+  it should "round trip data to a gzipped file if it ends with .gz" in {
     val text = "This is a stupid little text fragment for compression. Yay compression!"
     val in   = Seq(text, text, text)
     val f = Io.makeTempFile("test", ".gz")
