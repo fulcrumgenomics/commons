@@ -26,6 +26,7 @@ package com.fulcrumgenomics.commons.io
 import java.io._
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 import com.fulcrumgenomics.commons.CommonsDef._
 
@@ -47,35 +48,33 @@ trait IoUtil {
 
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
+  /** The level of compression to use when writing compressed output. */
+  def compressionLevel: Int = 5
 
-  /** Creates a new InputStream to read from the supplied path. */
+  /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
   def toInputStream(path: Path) : InputStream = {
-    // Developer Note **IMPORTANT**:
-    // Do not wrap pipes in BufferedInputStream, as there is a java bug where seek() is called on the stream.  For
-    // example, we get this exception:
-    //   java.io.IOException: Illegal seek
-    //   at sun.nio.ch.FileDispatcherImpl.seek0(Native Method)
-    //   at sun.nio.ch.FileDispatcherImpl.seek(FileDispatcherImpl.java:76)
-    //   at sun.nio.ch.FileChannelImpl.position(FileChannelImpl.java:264)
-    //   at sun.nio.ch.ChannelInputStream.available(ChannelInputStream.java:116)
-    //   at java.io.BufferedInputStream.read(BufferedInputStream.java:353)
-    //   at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
-    //   at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
-    //   at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)
-    //   at java.io.InputStreamReader.read(InputStreamReader.java:184)
-    //   at java.io.BufferedReader.fill(BufferedReader.java:161)
-    // This is a known issue; see: https://github.com/samtools/htsjdk/issues/1084
-    if (Files.isSameFile(path, Io.StdIn)) System.in
-    else {
-      val stream = Files.newInputStream(path)
-      val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
-      if (!attrs.isRegularFile && attrs.isOther) stream
-      else new BufferedInputStream(stream, bufferSize)
+
+    PathUtil.extensionOf(path) match {
+      case Some(".gz") | Some(".bgz") | Some(".bgzip") =>
+        new GZIPInputStream(Files.newInputStream(path), bufferSize)
+      case _ => {
+        val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
+        val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
+        new BufferedInputStream(stream, bufferSize)
+        if (!attrs.isRegularFile && attrs.isOther) stream
+        else new BufferedInputStream(stream, bufferSize)
+      }
     }
   }
 
-  /** Creates a new BufferedReader to read from the supplied path. */
-  def toOutputStream(path: Path) : OutputStream = new BufferedOutputStream(Files.newOutputStream(path), bufferSize)
+  /** Creates a new OutputStream to read from the supplied path. Automatically handles gzipped files. */
+  def toOutputStream(path: Path) : OutputStream = {
+      PathUtil.extensionOf(path) match {
+        case Some(".gz") => new GZIPOutputStream(Files.newOutputStream(path), bufferSize) { this.`def`.setLevel(compressionLevel) }
+        case _           => new BufferedOutputStream(Files.newOutputStream(path), bufferSize)
+      }
+
+  }
 
   /** Creates a new BufferedWriter to write to the supplied path. */
   def toWriter(path: Path) : BufferedWriter = new BufferedWriter(new OutputStreamWriter(toOutputStream(path)), bufferSize)
