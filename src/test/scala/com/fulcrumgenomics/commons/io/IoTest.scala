@@ -216,5 +216,4 @@ class IoTest extends UnitSpec {
     val out = Io.readLines(f).toSeq
     out shouldBe in
   }
-
 }
