@@ -45,10 +45,10 @@ trait IoUtil {
   val StdOut: Path = PathUtil.pathTo("/dev/stdout")
   val DevNull: Path = PathUtil.pathTo("/dev/null")
 
+  /** The level of compression to use when writing compressed output. */
+  var compressionLevel: Int = 5
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
-  /** The level of compression to use when writing compressed output. */
-  def compressionLevel: Int = 5
 
   /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
   def toInputStream(path: Path) : InputStream = {
