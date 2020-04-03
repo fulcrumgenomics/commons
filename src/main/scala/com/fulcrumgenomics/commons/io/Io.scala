@@ -36,7 +36,7 @@ import scala.io.Source
 * Singleton object to provide access to Io utility methods.
 */
 object Io extends IoUtil() {
-  override var compressionLevel: Int = 5
+  override def compressionLevel: Int = 5
 }
 
 /**
@@ -48,7 +48,8 @@ trait IoUtil {
   val DevNull: Path = PathUtil.pathTo("/dev/null")
 
   /** The level of compression to use when writing compressed output. */
-  var compressionLevel: Int
+  // var compressionLevel: Int
+  def compressionLevel: Int
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
 

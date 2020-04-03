@@ -54,7 +54,7 @@ class IoTest extends UnitSpec {
   }
 
   /** Impl of IoUtil to test that compressionLevel can be overridden and set */
-  class FakeIo(override var compressionLevel: Int = 5, override val bufferSize: Int = 128*1024) extends IoUtil {}
+  class FakeIo(var compressionLevel: Int = 5, override val bufferSize: Int = 128*1024) extends IoUtil {}
   object FakeIo extends FakeIo(compressionLevel=5, bufferSize=128*1024)
 
   "Io.assertReadable" should "not throw an exception for extent files" in {
