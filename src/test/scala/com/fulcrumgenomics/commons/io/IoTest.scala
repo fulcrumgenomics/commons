@@ -33,6 +33,7 @@ import com.fulcrumgenomics.commons.util.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import java.io.BufferedInputStream
 
 /**
  * Tests for various methods in the Io class
@@ -221,7 +222,7 @@ class IoTest extends UnitSpec {
     pipe(pipePath, lines)
     val writeFuture = Future { Io.writeLines(pipePath, lines); true }
     Io.readLines(pipePath).toList should contain theSameElementsInOrderAs lines
-    Await.result(writeFuture, Duration(1, TimeUnit.SECONDS)) shouldBe true
+    Await.result(writeFuture, Duration(3, TimeUnit.SECONDS)) shouldBe true
     Files.delete(pipePath)
   }
 
@@ -251,5 +252,14 @@ class IoTest extends UnitSpec {
     Io.writeLines(f, in)
     val out = Io.readLines(f).toSeq
     out shouldBe in
+  }
+
+  it should "return BufferedInputStream for both regular and symlinked files" in {
+    val tempDir = tmpdir()
+    val realFile = tmpfile(readable=true)
+    val link = Paths.get(tempDir.toString, "symbolic_file.txt")
+    val symFile = Files.createSymbolicLink(link, realFile)
+    Io.toInputStream(realFile) shouldBe an[BufferedInputStream]
+    Io.toInputStream(symFile) shouldBe an[BufferedInputStream]
   }
 }
