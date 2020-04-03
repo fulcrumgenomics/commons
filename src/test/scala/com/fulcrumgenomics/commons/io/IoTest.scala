@@ -223,6 +223,6 @@ class IoTest extends UnitSpec {
   
   "IoUtil.compressionLevel" should "be settable" in {
     FakeIo.compressionLevel = 6
-    FakeIo.compressionLevel shouldEqual 6
+    FakeIo.compressionLevel shouldBe 6
   }
 }
