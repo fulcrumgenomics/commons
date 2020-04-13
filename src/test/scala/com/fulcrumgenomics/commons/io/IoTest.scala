@@ -53,6 +53,10 @@ class IoTest extends UnitSpec {
     path
   }
 
+  /** Impl of IoUtil to test that compressionLevel can be overridden and set */
+  class FakeIo(var compressionLevel: Int = 5, override val bufferSize: Int = 128*1024) extends IoUtil {}
+  object FakeIo extends FakeIo(compressionLevel=5, bufferSize=128*1024)
+
   "Io.assertReadable" should "not throw an exception for extent files" in {
     val f1 = tmpfile(); val f2 = tmpfile(); val f3 = tmpfile()
     Io.assertReadable(f1)
@@ -215,5 +219,10 @@ class IoTest extends UnitSpec {
     Io.writeLines(f, in)
     val out = Io.readLines(f).toSeq
     out shouldBe in
+  }
+  
+  "IoUtil.compressionLevel" should "be settable" in {
+    FakeIo.compressionLevel = 6
+    FakeIo.compressionLevel shouldBe 6
   }
 }
