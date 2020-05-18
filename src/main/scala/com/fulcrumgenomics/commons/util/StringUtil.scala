@@ -159,28 +159,32 @@ object StringUtil {
     *
     * Multiple consecutive delimiters are treated as individual delimiters, delimiting empty fields. E.g. with
     * `delimiter=','` the string `a,b,,,c` will return `["a", "b", "", "", "c"]`.
+    *
+    * If `concatenateRemaining` is true, remaining text is placed into the last value in the array instead of discarding
+    * extra values.
     * */
-  def split(line: String, delimiter: Char = '\t', arr: Array[String]): Int = {
+  def split(line: String, delimiter: Char = '\t', arr: Array[String], concatenateRemaining: Boolean = false): Int = {
     val cs    = line.toCharArray
     val len   = cs.length
     var i     = 0
     var count = 0
     var start = 0
-    var end   = 0
 
     while (i <= len && count < arr.length) {
       if (i == len || cs(i) == delimiter) {
-        arr(count) = new String(cs, start, end-start)
+        arr(count) = new String(cs, start, i-start)
         count += 1
         start = i + 1
-        end   = i + 1
-      }
-      else {
-        end += 1
       }
 
       i += 1
     }
+
+    if (concatenateRemaining && i < len) {
+      arr(arr.length-1) += delimiter
+      arr(arr.length-1) += new String(cs, start, len-start)
+    }
+
     count
   }
 }
