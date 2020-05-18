@@ -114,7 +114,7 @@ class StringUtilTest extends UnitSpec {
     StringUtil.addSpacesToCamelCase("BBIAB") should be ("B B I A B")
   }
 
-  "StringUtil.split" should "split a line bases on a delimiter" in {
+  "StringUtil.split" should "split a line based on a delimiter" in {
     Seq("", ",b,c,d,", "a,b,c,d,", "a,b,c,d,e").foreach { line =>
       Seq(0, 1, 3, 5, 7).foreach { arraySize =>
         val actual   = Array.fill(arraySize)("")
@@ -122,6 +122,17 @@ class StringUtilTest extends UnitSpec {
         StringUtil.split(line = line, delimiter = ',', arr = actual) shouldBe math.min(actual.length, expected.length)
         actual.take(expected.length) should contain theSameElementsInOrderAs expected
       }
+    }
+  }
+
+  it should "split a line and place remaining text in the last value of the array when stuffLast=true" in {
+    val line   = "1,2,3,4,,6,this,is,remaining"
+    Seq.range(start=1, end=line.count(_ == ',') + 1).foreach { arraySize: Int =>
+      val actual = Array.fill(arraySize)("")
+      val expected = line.split(",", arraySize)
+      StringUtil.split(line = line, delimiter = ',', arr = actual, stuffLast = true) shouldBe expected.length
+      actual.take(expected.length) should contain theSameElementsInOrderAs expected
+      actual.mkString(",") shouldBe line
     }
   }
 }
