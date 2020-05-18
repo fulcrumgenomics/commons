@@ -126,7 +126,7 @@ class StringUtilTest extends UnitSpec {
   }
 
   it should "split a line and place remaining text in the last value of the array when stuffLast=true" in {
-    val line   = "1,2,3,4,,6,this,is,remaining"
+    val line = "1,2,3,4,,6,this,is,remaining"
     Seq.range(start=1, end=line.count(_ == ',') + 1).foreach { arraySize: Int =>
       val actual = Array.fill(arraySize)("")
       val expected = line.split(",", arraySize)

@@ -181,7 +181,7 @@ object StringUtil {
     }
 
     if (stuffLast && i < len) {
-      arr(arr.length-1) += "," + new String(cs, start, len-start)
+      arr(arr.length-1) += delimiter + new String(cs, start, len-start)
     }
 
     count
