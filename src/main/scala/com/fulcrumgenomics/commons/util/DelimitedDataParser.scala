@@ -73,7 +73,11 @@ class Row private[util] (private val headerIndices: Map[String,Int], private val
   /** Gets a value from the specified column. If the value is null or empty returns None.  If
     * `allowMissingColumn` is true, then None is returned if the given column name is not present. */
   def get[A](column: String, allowMissingColumn: Boolean = false)(implicit tag: ru.TypeTag[A]): Option[A] =
-    if (allowMissingColumn && ! headerIndices.contains(column)) None else get(headerIndices(column))
+    (headerIndices.get(column), allowMissingColumn) match {
+      case (None, true)   => None
+      case (None, false)  => throw new NoSuchElementException(column)
+      case (Some(idx), _) => get[A](idx)
+    }
 }
 
 
