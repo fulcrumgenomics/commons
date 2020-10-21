@@ -143,7 +143,7 @@ class DelimitedDataParserTest extends UnitSpec {
     row1[Int]("b") shouldBe 1
     row2.get[String]("a") shouldBe None
     row2.get[String]("b") shouldBe None
-    row2.get[String]("c") shouldBe None
+    row2.get[String]("c", allowMissingColumn=true) shouldBe None
   }
 
   it should "read present and absent values correctly using get()" in {
