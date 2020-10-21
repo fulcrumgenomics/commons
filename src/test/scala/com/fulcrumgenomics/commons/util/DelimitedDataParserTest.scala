@@ -211,7 +211,7 @@ class DelimitedDataParserTest extends UnitSpec {
     an[Exception] shouldBe thrownBy { row.get[Int]("d", allowMissingColumn=false) }
   }
 
-  it should "test empty fields returning None when allowMissingColumn is true" in {
+  it should "return None for missing values even with allowMissingColumn is true" in {
     val parser = csv(Seq("a,b,c", "1,2,"))
     val row = parser.next()
 
