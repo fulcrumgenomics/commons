@@ -28,12 +28,14 @@ import java.nio.file.{Path, Paths}
 
 /** Provides utility methods for creating and manipulating Path objects and path-like Strings. */
 object PathUtil {
+  val maxFileNameSize: Int = 254
   val illegalCharacters: String = "[!\"#$%&'()*/:;<=>?@\\^`{|}~] "
 
   /** Resolves a path from a String, and then makes the path absolute. Prefer this to PathUtil.pathTo elsewhere. */
   def pathTo(first: String, more: String*): Path = Paths.get(first, more:_*).toAbsolutePath.normalize
 
-  /** Replaces a set of illegal characters within a String that is to be used as a filename.
+  /** Replaces a set of illegal characters within a String that is to be used as a filename. This will also
+    * truncate the file name to be, at maximum, 255 characters.
     *
     * @param fileName the string that is to be used as a filename
     * @param illegalCharacters the set of characters to be replaced if found, defaults to [[illegalCharacters]]
@@ -42,9 +44,12 @@ object PathUtil {
     */
   def sanitizeFileName(fileName: String,
                        illegalCharacters: String = PathUtil.illegalCharacters,
-                       replacement: Option[Char] = Some('_')): String = replacement match {
-    case None    => fileName.filter(c => !illegalCharacters.contains(c))
-    case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
+                       replacement: Option[Char] = Some('_')): String = {
+    val sanitizedFileName = replacement match {
+      case None => fileName.filter(c => !illegalCharacters.contains(c))
+      case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
+    }
+    sanitizedFileName.substring(0, Math.min(fileName.length, maxFileNameSize))
   }
 
   /** Replaces the extension on an existing path. */

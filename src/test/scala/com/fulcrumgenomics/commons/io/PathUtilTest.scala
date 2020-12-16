@@ -82,6 +82,21 @@ class PathUtilTest extends UnitSpec {
     PathUtil.replaceExtension(PathUtil.pathTo("/Foo/bar/splat.bam"), ".not_yo_mama") should be (PathUtil.pathTo("/Foo/bar/splat.not_yo_mama"))
   }
 
+  it should "truncate file names longer than 255 characters" in {
+    PathUtil.sanitizeFileName("thisisthemostridiculouslylongfilenameandforsomereasonwestillneedtoh" +
+      "aveasanitizemethodthatensuresthatnoonecreatesafilenamethatisaslongasthisonewhichiskindofsilywhenyou" +
+      "thinkaboutitsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihavenoidea")should be("this" +
+      "isthemostridiculouslylongfilenameandforsomereasonwestillneedtohaveasanitizemethodthatensuresthatnoonecreatesa" +
+      "filenamethatisaslongasthisonewhichiskindofsilywhenyouthinkaboutitsincewhywouldyoueverreallyneedafilenamethat" +
+      "isaslongasthisonehonestlyihavenoid")
+    PathUtil.sanitizeFileName("!!thisisthemostridiculouslylongfilenameandforsomereasonwestillneedtoh" +
+      "aveasanitizemethodthatensuresthatnoonecreatesafilenamethatisaslongasthisonewhichiskindofsilywhenyou" +
+      "thinkaboutitsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihavenoidea",
+      replacement = Some('X')) should be("XXthisisthemostridiculouslylongfilenameandforsomereasonwestillneedtohavea" +
+      "sanitizemethodthatensuresthatnoonecreatesafilenamethatisaslongasthisonewhichiskindofsilywhenyouthinkabout" +
+      "itsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihaveno")
+  }
+
   "PathUtil.pathTo" should "resolve absolute paths just like Paths.get does" in {
     PathUtil.pathTo("/foo")         shouldBe Paths.get("/foo")
     PathUtil.pathTo("/foo/bar")     shouldBe Paths.get("/foo/bar")
