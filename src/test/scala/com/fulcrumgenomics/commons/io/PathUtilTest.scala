@@ -88,13 +88,13 @@ class PathUtilTest extends UnitSpec {
       "thinkaboutitsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihavenoidea")should be("this" +
       "isthemostridiculouslylongfilenameandforsomereasonwestillneedtohaveasanitizemethodthatensuresthatnoonecreatesa" +
       "filenamethatisaslongasthisonewhichiskindofsilywhenyouthinkaboutitsincewhywouldyoueverreallyneedafilenamethat" +
-      "isaslongasthisonehonestlyihavenoid")
+      "isaslongasthisonehonestlyihavenoi")
     PathUtil.sanitizeFileName("!!thisisthemostridiculouslylongfilenameandforsomereasonwestillneedtoh" +
       "aveasanitizemethodthatensuresthatnoonecreatesafilenamethatisaslongasthisonewhichiskindofsilywhenyou" +
       "thinkaboutitsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihavenoidea",
       replacement = Some('X')) should be("XXthisisthemostridiculouslylongfilenameandforsomereasonwestillneedtohavea" +
       "sanitizemethodthatensuresthatnoonecreatesafilenamethatisaslongasthisonewhichiskindofsilywhenyouthinkabout" +
-      "itsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihaveno")
+      "itsincewhywouldyoueverreallyneedafilenamethatisaslongasthisonehonestlyihaven")
   }
 
   "PathUtil.pathTo" should "resolve absolute paths just like Paths.get does" in {
