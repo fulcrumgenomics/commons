@@ -49,7 +49,7 @@ object PathUtil {
       case None => fileName.filter(c => !illegalCharacters.contains(c))
       case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
     }
-    sanitizedFileName.substring(0, Math.min(fileName.length, maxFileNameSize))
+    sanitizedFileName.substring(0, Math.min(sanitizedFileName.length, maxFileNameSize))
   }
 
   /** Replaces the extension on an existing path. */
