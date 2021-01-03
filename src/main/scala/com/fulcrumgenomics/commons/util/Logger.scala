@@ -24,8 +24,8 @@
 package com.fulcrumgenomics.commons.util
 
 import java.io.{PrintStream, PrintWriter, StringWriter}
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 import scala.collection.compat._
 
@@ -45,14 +45,15 @@ object Logger {
  */
 class Logger(clazz : Class[_]) {
   private val name = Logger.sanitizeSimpleClassName(clazz.getSimpleName)
-  private val fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+  private val fmt  = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
   var out: Option[PrintStream] = None
 
   /** Checks to see if a message should be emitted given the current log level, and then emits atomically. */
   protected def emit(l: LogLevel, parts: IterableOnce[Any]) : Unit = {
     if (l.compareTo(Logger.level) >= 0) {
       val builder = new StringBuilder(256)
-      builder.append("[").append(fmt.format(new Date())).append(" | ").append(name).append(" | ").append(l.toString).append("] ")
+      val now     = fmt.format(LocalDateTime.now())
+      builder.append("[").append(now).append(" | ").append(name).append(" | ").append(l.toString).append("] ")
       parts.iterator.foreach(part => builder.append(part))
       this.out match {
         case Some(o) => o.println(builder.toString())
