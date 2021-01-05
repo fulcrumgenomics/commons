@@ -398,6 +398,9 @@ trait CommonsDef extends Compat {
 
   /** Represents a path to a Reference FASTA file. */
   type PathToFasta = java.nio.file.Path
+ 
+  /** Represents a path to a sequence dictionary (.dict). */
+  type PathToSequenceDictionary = java.nio.file.Path
 
   /** Represents a path to a VCF/BCF/VCF.gz. */
   type PathToVcf = java.nio.file.Path
