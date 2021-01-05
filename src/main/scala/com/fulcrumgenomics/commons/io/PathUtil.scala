@@ -44,7 +44,8 @@ object PathUtil {
     */
   def sanitizeFileName(fileName: String,
                        illegalCharacters: String = PathUtil.illegalCharacters,
-                       replacement: Option[Char] = Some('_')): String = {
+                       replacement: Option[Char] = Some('_'),
+                       maxFileNameSize: Option[Int] = Some(MaxFileNameSize)): String = {
     val sanitizedFileName = replacement match {
       case None    => fileName.filter(c => !illegalCharacters.contains(c))
       case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
