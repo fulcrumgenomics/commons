@@ -71,7 +71,7 @@ class PathUtilTest extends UnitSpec {
     PathUtil.sanitizeFileName("A_B!C", replacement = Some('X')) should be("A_BXC")
     PathUtil.sanitizeFileName("A B\nC") should be("A_B\nC")
     PathUtil.sanitizeFileName("A1B2C", replacement = Some('_')) should be("A1B2C")
-    PathUtil.sanitizeFileName("A_B C", illegalCharacters = s"${PathUtil.illegalCharacters}ABC", replacement = Some('_')) should be("_____")
+    PathUtil.sanitizeFileName("A_B C", illegalCharacters = s"${PathUtil.IllegalCharacters}ABC", replacement = Some('_')) should be("_____")
     PathUtil.sanitizeFileName("A1B2C", replacement = None) should be("A1B2C")
     PathUtil.sanitizeFileName("A_B!C", replacement = None) should be("A_BC")
   }
@@ -80,6 +80,11 @@ class PathUtilTest extends UnitSpec {
     PathUtil.replaceExtension(PathUtil.pathTo("Foo.bam"), ".bai") should be (PathUtil.pathTo("Foo.bai"))
     PathUtil.replaceExtension(PathUtil.pathTo("Foo.bar.bam"), ".bai") should be (PathUtil.pathTo("Foo.bar.bai"))
     PathUtil.replaceExtension(PathUtil.pathTo("/Foo/bar/splat.bam"), ".not_yo_mama") should be (PathUtil.pathTo("/Foo/bar/splat.not_yo_mama"))
+  }
+
+  it should "truncate file names longer than 255 characters" in {
+    PathUtil.sanitizeFileName("!" * (PathUtil.MaxFileNameSize + 10)) shouldBe "_" * PathUtil.MaxFileNameSize
+    PathUtil.sanitizeFileName("!" * (PathUtil.MaxFileNameSize + 10), replacement = Some('X')) shouldBe "X" * PathUtil.MaxFileNameSize
   }
 
   "PathUtil.pathTo" should "resolve absolute paths just like Paths.get does" in {
