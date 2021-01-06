@@ -41,7 +41,7 @@ object Logger {
 }
 
 /**
- * Very simple logging class that supports logging at multiple levels.
+ * Very simple thread-safe logging class that supports logging at multiple levels.
  */
 class Logger(clazz : Class[_]) {
   private val name = Logger.sanitizeSimpleClassName(clazz.getSimpleName)
