@@ -28,7 +28,7 @@ import java.nio.file.{Path, Paths}
 
 /** Provides utility methods for creating and manipulating Path objects and path-like Strings. */
 object PathUtil {
-  @deprecated("Use `IllegalCharacters`")
+  @deprecated("Use `IllegalCharacters`", since = "1.1.0")
   def illegalCharacters: String = IllegalCharacters
 
   val MaxFileNameSize: Int = 254
