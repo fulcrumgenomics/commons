@@ -29,6 +29,8 @@ package com.fulcrumgenomics.commons.collection
   * evicts the least recently used (by get or put) key. */
 class LeastRecentlyUsedCache[Key, Value](maxEntries: Int) extends Iterable[(Key, Value)] {
 
+  require(maxEntries > 0, s"The maximum number of entries must be greater than one, found: $maxEntries")
+
   private val map = scala.collection.mutable.LinkedHashMap[Key, Value]()
 
   /** Gets value for the given key, or None if it doesn't exist.  Will update the key to
@@ -53,11 +55,16 @@ class LeastRecentlyUsedCache[Key, Value](maxEntries: Int) extends Iterable[(Key,
   }
 
   /** Removes the value with the given key from the cache. */
-  def remove(key: Key): Option[Value] = map.remove(key)
+  def remove(key: Key): Option[Value] = map.synchronized { map.remove(key) }
 
-  /** An iterator over key-value pairs from least to most recently used. */
-  override def iterator: Iterator[(Key, Value)] = map.iterator
+  /** An iterator over key-value pairs from least to most recently used.
+    *
+    * The key-value pairs will be reflect the key-value pairs at the time this methods is
+    * called, and store them separately in memory from this LRU cache.  I.e. additional
+    * modifications to this cache will not be reflected in the iterator returned herein.
+    * */
+  override def iterator: Iterator[(Key, Value)] = map.synchronized { map.toSeq.iterator }
 
   /** The number elements in the cache. */
-  override def size: Int = map.size
+  override def size: Int = map.synchronized { map.size }
 }
