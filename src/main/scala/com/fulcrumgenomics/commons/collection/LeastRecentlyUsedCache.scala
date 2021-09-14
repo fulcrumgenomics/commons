@@ -34,30 +34,22 @@ class LeastRecentlyUsedCache[Key, Value](maxEntries: Int) extends Iterable[(Key,
   /** Gets value for the given key, or None if it doesn't exist.  Will update the key to
     * be the most recently used. */
   def get(key: Key): Option[Value] = map.synchronized {
-    val result = map.get(key)
-    // remove and add the key/value if found, to move it to the most recently used
-    result.foreach { value =>
-      map.remove(key)
-      map.put(key, value)
-    }
+    val result = map.remove(key)
+    // re-insert if found, to move it to the most recently used
+    result.foreach { value => map.put(key, value) }
     result
   }
 
   /** Adds the value for the given key.  Will update the key to be the most recently used. Returns
     * the value that was removed, or None if the key was not in the cache. */
   def put(key: Key, value: Value): Option[Value] = map.synchronized {
-    // remove the key if present
-    val previous = map.remove(key)
-    // remove the least recently used element if needed
-    // IMPORTANT: must check the size **after** removing the key, since if the key is present, we're overwriting it and
-    // so the # of entries wont change.
-    if (map.size == maxEntries) { // this implies the key was not present in the cache
-      map.headOption.foreach { case (k, _) => map.remove(k) }
+    val previous = map.put(key, value)
+
+    if (map.size > maxEntries) {
+      map.keysIterator.take(map.size - maxEntries).foreach(map.remove)
     }
-    // add the key/value as the most recently used
-    map.put(key, value)
-    // return the removed value
-    previous
+
+   previous
   }
 
   /** Removes the value with the given key from the cache. */
