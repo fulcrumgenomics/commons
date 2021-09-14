@@ -45,13 +45,19 @@ class LeastRecentlyUsedCache[Key, Value](maxEntries: Int) extends Iterable[(Key,
   /** Adds the value for the given key.  Will update the key to be the most recently used. Returns
     * the value that was removed, or None if the key was not in the cache. */
   def put(key: Key, value: Value): Option[Value] = map.synchronized {
-    val previous = map.put(key, value)
-
-    if (map.size > maxEntries) {
-      map.keysIterator.take(map.size - maxEntries).foreach(map.remove)
+    // If the key exists in the underyling map, it needs to be re-inserted to update the insertion order used in
+    // LinkedHashMap.  If the key is not present, previous is None.
+    val previous = map.remove(key)
+    // Remove the least recently used element if needed
+    // IMPORTANT: must check the size **after** removing the key, since if the key is present, we're overwriting it and
+    // so the # of entries wont change.
+    if (map.size == maxEntries) { // this implies the key was not present in the cache
+      map.headOption.foreach { case (k, _) => map.remove(k) }
     }
-
-   previous
+    // Add the key/value as the most recently used
+    map.put(key, value)
+    // Return the removed value
+    previous
   }
 
   /** Removes the value with the given key from the cache. */

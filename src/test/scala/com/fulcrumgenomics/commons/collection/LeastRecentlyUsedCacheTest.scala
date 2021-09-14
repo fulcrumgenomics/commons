@@ -55,10 +55,14 @@ class LeastRecentlyUsedCacheTest extends UnitSpec with OptionValues{
     // Should do nothing, as (4, 5) was already the most recently used
     cache.put(4, 5).value shouldBe 5
     cache.iterator.toSeq should contain theSameElementsInOrderAs Seq((2, 3), (3, 4), (4, 5))
+    val keyValues = cache.iterator.toSeq
 
     // Should make (2, 3) the most recently used
     cache.put(2, 3).value shouldBe 3
     cache.iterator.toSeq should contain theSameElementsInOrderAs Seq((3, 4), (4, 5), (2, 3))
+
+    // make sure that keyValues is the ordr from before the cache.put(2, 3)
+    keyValues should contain theSameElementsInOrderAs Seq((2, 3), (3, 4), (4, 5))
   }
 
   it should "remove elements from the cache" in {
