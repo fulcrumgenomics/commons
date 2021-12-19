@@ -25,6 +25,8 @@
 
 package com.fulcrumgenomics.commons.async
 
+import com.fulcrumgenomics.commons.CommonsDef.yieldAndThen
+
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue, LinkedBlockingDeque, TimeUnit}
 
 object AsyncIterator {
@@ -72,8 +74,8 @@ class AsyncIterator[T](private val source: Iterator[T], bufferSize: Option[Int] 
       }
     }
 
-    // Did we get an item from the buffer?
-    buffer.nonEmpty
+    // Did we get an item from the buffer? After testing the buffer, perform an exception check and raise if needed.
+    yieldAndThen(buffer.nonEmpty)(checkAndRaise())
   }
 
   /** Gets the next item. */

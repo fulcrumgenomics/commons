@@ -45,6 +45,14 @@ class AsyncIteratorTest extends UnitSpec with OptionValues {
     }
   }
 
+  Seq(1, 2, 3).zip(Seq("first", "middle", "last")).foreach { case (exceptional, text) =>
+    it should s"raise an exception on an exception-raising $text element within the source iterator" in {
+      def raise(num: Int): Int = if (num == exceptional) throw new IllegalArgumentException("Exceptional!") else num
+      val source = Seq(1, 2, 3).iterator.map(raise)
+      an[IllegalArgumentException] shouldBe thrownBy { new AsyncIterator(source = source).start().toSeq }
+    }
+  }
+
   "AsyncIterator.apply" should "start a daemon thread via apply" in {
     val iter = AsyncIterator[String](Iterator("hello world"))
     iter.hasNext() shouldBe true
