@@ -68,7 +68,7 @@ class AsyncIterator[T](private val source: Iterator[T], bufferSize: Option[Int] 
 
     // Get the next item, or wait until the underlying thread is done and there are no more items in the queue
     while (buffer.isEmpty && !(this.done && this.queue.isEmpty)) {
-      checkAndRaise() // check if hte underlying thread raised an exception
+      checkAndRaise() // check if the underlying thread raised an exception
       tryAndModifyInterruptedException("Interrupted waiting on taking from the queue.") {
         buffer = Option(this.queue.poll(50, TimeUnit.MILLISECONDS))
       }
@@ -85,6 +85,8 @@ class AsyncIterator[T](private val source: Iterator[T], bufferSize: Option[Int] 
       case None => throw new NoSuchElementException("Calling next() when hasNext() is false.")
       case Some(item) =>
         this.buffer = None
+        // Now that the buffer is emptied, make a call to hasNext() to see if there are any more elements or exceptions.
+        if (!hasNext()) checkAndRaise()
         item
     }
   }
