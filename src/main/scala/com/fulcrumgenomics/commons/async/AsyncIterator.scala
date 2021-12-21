@@ -25,8 +25,6 @@
 
 package com.fulcrumgenomics.commons.async
 
-import com.fulcrumgenomics.commons.CommonsDef.yieldAndThen
-
 import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue, LinkedBlockingDeque, TimeUnit}
 
 object AsyncIterator {
@@ -68,14 +66,24 @@ class AsyncIterator[T](private val source: Iterator[T], bufferSize: Option[Int] 
 
     // Get the next item, or wait until the underlying thread is done and there are no more items in the queue
     while (buffer.isEmpty && !(this.done && this.queue.isEmpty)) {
-      checkAndRaise() // check if the underlying thread raised an exception
+      checkAndRaise() // check if hte underlying thread raised an exception
       tryAndModifyInterruptedException("Interrupted waiting on taking from the queue.") {
         buffer = Option(this.queue.poll(50, TimeUnit.MILLISECONDS))
       }
     }
 
-    // Did we get an item from the buffer? After testing the buffer, perform an exception check and raise if needed.
-    yieldAndThen(buffer.nonEmpty)(checkAndRaise())
+    // If there are no more elements in the source iterator then await the signal for final completion of the thread's
+    // execution work. We must await the finished countdown latch first because a race condition may occur when the
+    // source iterator raises an exception but we have not yet had a chance to save the exception message before
+    // finishing the final call to `hasNext()`. Blocking and awaiting the final countdown latch signal guarantees
+    // we will see the exception message if it is present. If it is present, then we get a final chance to re-raise it.
+    // If we did not handle exceptions this way, then the iterator may be silently cut short and data truncated.
+    // Issue: https://github.com/fulcrumgenomics/commons/pull/74
+    if (buffer.isEmpty) {
+      awaitDone()
+      checkAndRaise()
+    }
+    buffer.nonEmpty
   }
 
   /** Gets the next item. */
@@ -85,8 +93,6 @@ class AsyncIterator[T](private val source: Iterator[T], bufferSize: Option[Int] 
       case None => throw new NoSuchElementException("Calling next() when hasNext() is false.")
       case Some(item) =>
         this.buffer = None
-        // Now that the buffer is emptied, make a call to hasNext() to see if there are any more elements or exceptions.
-        if (!hasNext()) checkAndRaise()
         item
     }
   }
