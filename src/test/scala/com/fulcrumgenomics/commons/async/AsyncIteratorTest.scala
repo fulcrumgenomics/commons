@@ -45,6 +45,18 @@ class AsyncIteratorTest extends UnitSpec with OptionValues {
     }
   }
 
+  it should s"correctly propagate an exception that originates from within the source iterator" in {
+    // Issue: https://github.com/fulcrumgenomics/commons/pull/74
+    var exceptionNotRaisedInTime = false
+    def raise(num: Int): Int = throw new IllegalArgumentException(num.toString)
+    val source = Range(1, 10000).iterator.map { num =>
+      if (num > 1) exceptionNotRaisedInTime = true // We do this because we can't successfully raise in this context.
+      raise(num)
+    }
+    an[IllegalArgumentException] shouldBe thrownBy { new AsyncIterator(source = source).start().toSeq }
+    withClue("Failed because the illegal argument exception was not caught in time:") { exceptionNotRaisedInTime shouldBe false }
+  }
+
   "AsyncIterator.apply" should "start a daemon thread via apply" in {
     val iter = AsyncIterator[String](Iterator("hello world"))
     iter.hasNext() shouldBe true
