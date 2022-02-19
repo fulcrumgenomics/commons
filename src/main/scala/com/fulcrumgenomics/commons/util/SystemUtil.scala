@@ -58,7 +58,7 @@ object SystemUtil {
   /** True if the current system might support the Intel Inflater and Deflater, false otherwise. */
   lazy val IntelCompressionLibrarySupported: Boolean = {
     if (!isLinux && !isMac) false
-    else if (isOsArch(name = "ppc64le")) false
+    else if (isMac && !isOsArch("x86")) false
     else if (isMac && isOsVersion("10\\.14\\..+".r)) false // FIXME: https://github.com/Intel-HLS/GKL/issues/101
     else true
   }
