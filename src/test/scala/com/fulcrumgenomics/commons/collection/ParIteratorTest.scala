@@ -6,7 +6,7 @@ class ParIteratorTest extends UnitSpec {
   "ParIterator" should "map the same as a non-parallel map" in {
     val xs  = Range.inclusive(1, 100)
     val par = ParIterator(xs.iterator, chunkSize=8, threads=4, chunkBuffer=3)
-    val out = par.map(_ + 1).map(_ * 2).toAsync().toIndexedSeq
+    val out = par.map(_ + 1).map(_ * 2).toAsync.toIndexedSeq
     val exp = xs.map(_ + 1).map(_ * 2)
     out should contain theSameElementsInOrderAs exp
   }
@@ -14,7 +14,7 @@ class ParIteratorTest extends UnitSpec {
   it should "allow for a more complicated chain of operations" in {
     val xs  = Range.inclusive(1, 100)
     val par = ParIterator(xs.iterator, chunkSize=8, threads=4, chunkBuffer=3)
-    val out = par.filter(_ % 3 == 0).flatMap(x => Seq(x, x)).filterNot(_ < 50).toAsync().toIndexedSeq
+    val out = par.filter(_ % 3 == 0).flatMap(x => Seq(x, x)).filterNot(_ < 50).toAsync.toIndexedSeq
     val exp =  xs.filter(_ % 3 == 0).flatMap(x => Seq(x, x)).filterNot(_ < 50)
     out should contain theSameElementsInOrderAs  exp
   }
@@ -24,7 +24,7 @@ class ParIteratorTest extends UnitSpec {
       val xs  = Range.inclusive(1, 100)
       val par = ParIterator(xs.iterator, chunkSize=8, threads=4, chunkBuffer=chunkBuffer)
       an[Exception] shouldBe thrownBy {
-        par.map(x => if (x == 50) throw new IllegalArgumentException else x + 1).toAsync().toIndexedSeq
+        par.map(x => if (x == 50) throw new IllegalArgumentException else x + 1).toAsync.toIndexedSeq
       }
     }
   }

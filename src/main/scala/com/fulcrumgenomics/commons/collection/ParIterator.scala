@@ -125,7 +125,13 @@ class ParIterator[A] private (private val iter: Iterator[Seq[A]],
     * @param cache how many elements to accumulate in the async iterator's cache - for best memory usage this
     *              should be a multiple of `chunkSize`.
     */
-  def toAsync(cache: Int = 4 * chunkSize): AsyncIterator[A] = AsyncIterator(this, Some(cache))
+  def toAsync(cache: Int): AsyncIterator[A] = AsyncIterator(this, Some(cache))
+
+  /** Wraps an async iterator around this parallel iterator to draw items through the iterator. This should only
+    * be invoked after any other transforming operations such as map/filter/etc.
+    */
+  def toAsync: AsyncIterator[A] = toAsync(4 * chunkSize)
+  // ^ Separate method so users can call .toAsync without () which is not doable with just a default above
 
   //////////////////////////////////////////////////////////////////////////////
   // Everything below here is just overrides of transform methods on Iterator
