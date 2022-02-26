@@ -102,24 +102,22 @@ object ParIterator {
 class ParIterator[A] private (private val iter: Iterator[Seq[A]],
                               val chunkSize: Int = 1024,
                               private val taskSupport: TaskSupport) extends AbstractIterator[A] {
-  private var currentChunk: Seq[A] = if (iter.hasNext) iter.next() else Seq.empty
+  private var currentChunk: Iterator[A] = if (iter.hasNext) iter.next().iterator else Iterator.empty
 
   /** True if there are more items available, false otherwise. */
   override def hasNext: Boolean = {
-    while (currentChunk.isEmpty && iter.hasNext) currentChunk = iter.next()
+    while (currentChunk.isEmpty && iter.hasNext) currentChunk = iter.next().iterator
     currentChunk.nonEmpty
   }
 
   /** Retrieve the next item.  Will throw an exception if there are no more items. */
   override def next(): A = {
     if (!hasNext) throw new NoSuchElementException
-    val v = currentChunk.head
-    currentChunk = currentChunk.tail
-    v
+    currentChunk.next()
   }
 
   /** Returns an iterator over all remaining chunks including the current chunk. */
-  private def chunks: Iterator[Seq[A]] = Iterator(currentChunk) ++ iter
+  private def chunks: Iterator[Seq[A]] = Iterator(currentChunk.to(LazyList)) ++ iter
 
   /** Wraps an async iterator around this parallel iterator to draw items through the iterator. This should only
     * be invoked after any other transforming operations such as map/filter/etc.
