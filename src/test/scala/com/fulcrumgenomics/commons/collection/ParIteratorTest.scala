@@ -8,7 +8,7 @@ class ParIteratorTest extends UnitSpec {
     val par = ParIterator(xs.iterator, chunkSize=8, threads=4, chunkBuffer=Some(3))
     val out = par.map(_ + 1).map(_ * 2).toAsync().toIndexedSeq
     val exp = xs.map(_ + 1).map(_ * 2)
-    out shouldBe exp
+    out contain theSameElementsInOrderAs exp
   }
 
   it should "allow for a more complicated chain of operations" in {

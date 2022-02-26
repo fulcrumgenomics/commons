@@ -32,11 +32,11 @@ import scala.collection.AbstractIterator
 import scala.collection.parallel.{ForkJoinTaskSupport, TaskSupport}
 
 /**
-  * Companion object to help with manufacturing ParIterators.
+  * Methods to help with manufacturing [[ParIterators]].
   */
 object ParIterator {
   /**
-    * Constructs a ParIterator from the underlying iterator, that will perform operations in parallel on chunks
+    * Constructs a [[ParIterator]] from the underlying iterator that will perform operations in parallel on chunks
     * of `chunkSize` using `threads` threads.
     *
     * @param iter the underlying iterator to parallelize over
@@ -116,7 +116,7 @@ class ParIterator[A] private (private val iter: Iterator[Seq[A]],
     * be invoked after and other transforming operations such as map/filter/etc.
     *
     * @param cache how many elements to accumulate in the async iterator's cache - for best memory usage this
-    *              should be a multiple of chunkSize.
+    *              should be a multiple of `chunkSize`.
     */
   def toAsync(cache: Int = 4 * chunkSize): AsyncIterator[A] = AsyncIterator(this, Some(cache))
 
