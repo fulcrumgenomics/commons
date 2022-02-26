@@ -238,6 +238,11 @@ class CommonsDefTest extends UnitSpec {
     pool2.getAsyncMode shouldBe false
   }
 
+  "ParIteratorSupport" should "allow creation of parallel iterators" in {
+    val xs = Range(0, 100).iterator.parWith(4).map(_ * 2).toIndexedSeq
+    xs shouldBe Range(0, 100).map(_ * 2)
+  }
+
   "CommonsDef implicits" should "create a better buffered iterator" in {
     Seq(1,2,3).iterator.bufferBetter shouldBe an[BetterBufferedIterator[Int]]
   }

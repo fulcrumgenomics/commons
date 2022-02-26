@@ -25,15 +25,13 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
-
-import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
+import com.fulcrumgenomics.commons.collection.{BetterBufferedIterator, ParIterator}
 import com.fulcrumgenomics.commons.util.Logger
 
 import scala.collection.compat._
 import scala.collection.parallel.immutable
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable, TaskSupport}
 import java.util.concurrent.ForkJoinPool
-
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
@@ -371,6 +369,13 @@ trait CommonsDef extends Compat {
     /** Creates a parallel collection with the desired level of parallelism and FIFO semantics. */
     def parWith(parallelism: Int, fifo: Boolean = true): P = {
       parWith(new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, fifo))
+    }
+  }
+
+  /** Implicit class that allows generation of ParIterators from Iterators with convenience methods. */
+  implicit class ParIteratorSupport[A](iterator: Iterator[A]) {
+    def parWith(threads: Int, chunkSize: Int = 2048, chunkBuffer: Int = 2): ParIterator[A] = {
+      ParIterator(this.iterator, chunkSize=chunkSize, threads=threads, if (chunkBuffer < 1) None else Some(chunkBuffer))
     }
   }
 
