@@ -374,8 +374,18 @@ trait CommonsDef extends Compat {
 
   /** Implicit class that allows generation of ParIterators from Iterators with convenience methods. */
   implicit class ParIteratorSupport[A](iterator: Iterator[A]) {
-    def parWith(threads: Int, chunkSize: Int = 2048, chunkBuffer: Int = 2): ParIterator[A] = {
-      ParIterator(this.iterator, chunkSize=chunkSize, threads=threads, if (chunkBuffer < 1) None else Some(chunkBuffer))
+    /**
+      * Creates a [[ParIterator]]; see documentation for that class for detailed usage.
+      *
+      * @param threads the number of threads to use in parallel transform operations on the iterator
+      * @param chunkSize the size of chunks to collect and perform parallel operations on
+      * @param chunkBuffer if > 0 use an [[com.fulcrumgenomics.commons.async.AsyncIterator]] to accumulate/cache
+      *                    `chunkBuffer` incoming chunks ready for parallel processing
+      */
+    def parWith(threads: Int,
+                chunkSize: Int = ParIterator.DefaultChunkSize,
+                chunkBuffer: Int = ParIterator.DefaultChunkBuffer): ParIterator[A] = {
+      ParIterator(this.iterator, threads=threads, chunkSize=chunkSize, chunkBuffer=chunkBuffer)
     }
   }
 

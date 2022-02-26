@@ -35,20 +35,29 @@ import scala.collection.parallel.{ForkJoinTaskSupport, TaskSupport}
   * Methods to help with manufacturing [[ParIterators]].
   */
 object ParIterator {
+  /** The default chunk size used by [[ParIterator]]s. */
+  val DefaultChunkSize: Int = 2048
+
+  /** The default incoming chunk buffering strategy for [[ParIterator]]s. */
+  val DefaultChunkBuffer: Int = 2
+
   /**
     * Constructs a [[ParIterator]] from the underlying iterator that will perform operations in parallel on chunks
     * of `chunkSize` using `threads` threads.
     *
     * @param iter the underlying iterator to parallelize over
-    * @param chunkSize the number of elements to chunk together for parallel processing
     * @param threads the number of threads to use for parallel computations like `map()`
-    * @param chunkBuffer if Some(n) use an [[AsyncIterator]] to pre-buffer n chunks from the input
-    *                    read for parallel computation
+    * @param chunkSize the number of elements to chunk together for parallel processing
+    * @param chunkBuffer if > 0 use an  [[AsyncIterator]] to pre-buffer `chunkBuffer` chunks from the input
+    *                    `iter` ready for parallel computation
     */
-  def apply[A](iter: Iterator[A], chunkSize: Int = 1024, threads: Int, chunkBuffer: Option[Int] = Some(2)): ParIterator[A] = {
+  def apply[A](iter: Iterator[A],
+               threads: Int,
+               chunkSize: Int = DefaultChunkSize,
+               chunkBuffer: Int = DefaultChunkBuffer): ParIterator[A] = {
     val pool = new ForkJoinPool(threads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true)
     val support = new ForkJoinTaskSupport(pool)
-    apply(iter, chunkSize, support, chunkBuffer)
+    apply(iter, support, chunkSize, chunkBuffer)
   }
 
   /**
@@ -56,18 +65,15 @@ object ParIterator {
     * of `chunkSize` using the provided `TaskSupport`.
     *
     * @param iter the underlying iterator to parallelize over
-    * @param chunkSize the number of elements to chunk together for parallel processing
     * @param support the TaskSupport to use for parallel computations like `map()`
-    * @param chunkBuffer if Some(n) use an [[AsyncIterator]] to pre-buffer n chunks from the input
-    *                    read for parallel computation
+    * @param chunkSize the number of elements to chunk together for parallel processing
+    * @param chunkBuffer if > 0 use an  [[AsyncIterator]] to pre-buffer `chunkBuffer` chunks from the input
+    *                    `iter` ready for parallel computation
     */
-  def apply[A](iter: Iterator[A], chunkSize: Int, support: TaskSupport, chunkBuffer: Option[Int]): ParIterator[A] = {
+  def apply[A](iter: Iterator[A], support: TaskSupport, chunkSize: Int, chunkBuffer: Int): ParIterator[A] = {
     val grouped = {
       val g = iter.grouped(chunkSize)
-      chunkBuffer match {
-        case None    => g
-        case Some(n) => AsyncIterator(g, Some(n))
-      }
+      if (chunkBuffer <= 0) g else AsyncIterator(g, Some(chunkBuffer))
     }
 
     new ParIterator[A](grouped, chunkSize, support)
@@ -99,11 +105,14 @@ class ParIterator[A] private (private val iter: Iterator[Seq[A]],
   private var currentChunk: Seq[A] = if (iter.hasNext) iter.next() else Seq.empty
 
   /** True if there are more items available, false otherwise. */
-  override def hasNext: Boolean = currentChunk.nonEmpty || iter.hasNext
+  override def hasNext: Boolean = {
+    while (currentChunk.isEmpty && iter.hasNext) currentChunk = iter.next()
+    currentChunk.nonEmpty
+  }
 
   /** Retrieve the next item.  Will throw an exception if there are no more items. */
   override def next(): A = {
-    while (currentChunk.isEmpty && iter.hasNext) currentChunk = iter.next()
+    if (!hasNext) throw new NoSuchElementException
     val v = currentChunk.head
     currentChunk = currentChunk.tail
     v
@@ -113,7 +122,7 @@ class ParIterator[A] private (private val iter: Iterator[Seq[A]],
   private def chunks: Iterator[Seq[A]] = Iterator(currentChunk) ++ iter
 
   /** Wraps an async iterator around this parallel iterator to draw items through the iterator. This should only
-    * be invoked after and other transforming operations such as map/filter/etc.
+    * be invoked after any other transforming operations such as map/filter/etc.
     *
     * @param cache how many elements to accumulate in the async iterator's cache - for best memory usage this
     *              should be a multiple of `chunkSize`.
