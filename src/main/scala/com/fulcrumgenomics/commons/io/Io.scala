@@ -24,6 +24,7 @@
 package com.fulcrumgenomics.commons.io
 
 import java.io._
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
@@ -55,12 +56,22 @@ trait IoUtil {
 
   /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
   def toInputStream(path: Path) : InputStream = {
+
     PathUtil.extensionOf(path) match {
       case Some(".gz") | Some(".bgz") | Some(".bgzip") =>
         new GZIPInputStream(Files.newInputStream(path), bufferSize)
       case _ => {
         val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
-        new BufferedInputStream(stream, bufferSize)
+        val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
+
+        if (!attrs.isRegularFile && attrs.isOther) {
+          // Not a regular file, directory or symlink - which likely means a named pipe
+          // and for some reason buffering reading from named pipes goes badly
+          stream
+        }
+        else {
+          new BufferedInputStream(stream, bufferSize)
+        }
       }
     }
   }
