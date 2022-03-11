@@ -36,7 +36,9 @@ import scala.io.Source
 /**
 * Singleton object to provide access to Io utility methods.
 */
-object Io extends IoUtil
+object Io extends IoUtil() {
+  override def compressionLevel: Int = 5
+}
 
 /**
  * Trait that can be mixed in to make an Io utility object, and can be re-used elsewhere.
@@ -46,10 +48,11 @@ trait IoUtil {
   val StdOut: Path = PathUtil.pathTo("/dev/stdout")
   val DevNull: Path = PathUtil.pathTo("/dev/null")
 
+  /** The level of compression to use when writing compressed output. */
+  // var compressionLevel: Int
+  def compressionLevel: Int
   /** How large a buffer should be used when buffering operations. */
   def bufferSize: Int = 32 * 1024
-  /** The level of compression to use when writing compressed output. */
-  def compressionLevel: Int = 5
 
   /** Creates a new InputStream to read from the supplied path. Automatically handles gzipped files. */
   def toInputStream(path: Path) : InputStream = {

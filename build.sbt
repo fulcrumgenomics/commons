@@ -83,12 +83,13 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("http://www.fulcrumgenomics.com")),
   homepage             := Some(url("http://github.com/fulcrumgenomics/commons")),
   startYear            := Some(2015),
-  scalaVersion         := "2.13.0",
-  crossScalaVersions   := Seq("2.12.8", "2.13.0"),
+  scalaVersion         := "2.13.8",
+  crossScalaVersions   := Seq("2.13.8"),
   scalacOptions        ++= Seq("-target:jvm-1.8", "-deprecation", "-unchecked"),
   scalacOptions in (Compile, doc) ++= docScalacOptions,
   scalacOptions in (Test, doc) ++= docScalacOptions,
-  autoAPIMappings := true,
+  useCoursier          := false,
+  autoAPIMappings      := true,
   testOptions in Test  += Tests.Argument(TestFrameworks.ScalaTest, "-h", Option(System.getenv("TEST_HTML_REPORTS")).getOrElse(htmlReportsDirectory)),
   testOptions in Test  += Tests.Argument("-l", "LongRunningTest"), // ignores long running tests
   // uncomment for full stack traces
@@ -96,7 +97,8 @@ lazy val commonSettings = Seq(
   fork in Test         := true,
   resolvers            += Resolver.jcenterRepo,
   shellPrompt          := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) },
-  updateOptions        := updateOptions.value.withCachedResolution(true)
+  updateOptions        := updateOptions.value.withCachedResolution(true),
+  updateOptions        := updateOptions.value.withGigahorse(false)
 ) ++ Defaults.coreDefaultSettings
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,31 +115,11 @@ lazy val root = Project(id="commons", base=file("."))
   .settings(description := "Scala commons for Fulcrum Genomics.")
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe"           %  "config"                  % "1.3.2",
-      "org.scala-lang"         %  "scala-reflect"           % scalaVersion.value,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
+      "com.typesafe"           %  "config"                     % "1.3.2",
+      "org.scala-lang"         %  "scala-reflect"              % scalaVersion.value,
+      "org.scala-lang.modules" %% "scala-collection-compat"    % "2.1.1",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
       //---------- Test libraries -------------------//
-      "org.scalatest"  %% "scalatest"     % "3.0.8"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
+      "org.scalatest"  %% "scalatest"     % "3.1.3"  % "test->*" excludeAll ExclusionRule(organization="org.junit", name="junit")
     )
-  )
-  .settings(
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, major)) if major >= 13 =>
-          Seq("org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0")
-        case _ =>
-          Seq()
-      }
-    }
-  )
-  .settings(
-    // Adds a `src/main/scala-2.13+` source directory for Scala 2.13 and newer
-    // and a `src/main/scala-2.12-` source directory for Scala version older than 2.13
-    unmanagedSourceDirectories in Compile += {
-      val sourceDir = (sourceDirectory in Compile).value
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
-        case _                       => sourceDir / "scala-2.12-"
-      }
-    }
   )

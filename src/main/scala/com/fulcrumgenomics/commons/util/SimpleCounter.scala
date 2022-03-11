@@ -38,11 +38,12 @@ object SimpleCounter {
 
 /**
   * Super-simple class for counting occurrences of any kind of object. Will return
-  * zero for any item that has not been counted yet.
+  * zero for any item that has not been counted yet.  The iterator and all traversal
+  * methods of this class visit elements in the order they were inserted.
   */
 class SimpleCounter[T]extends Iterable[(T, Long)] {
-  /** Creates the map in which we store the counts. */
-  protected def makeMap(): mutable.Map[T, Long] = new mutable.HashMap()
+  /** Creates the map in which we store the counts, with iteration in insertion order. */
+  protected def makeMap(): mutable.Map[T, Long] = new mutable.LinkedHashMap()
 
   private val counts: mutable.Map[T, Long] = makeMap().withDefaultValue(0L)
 

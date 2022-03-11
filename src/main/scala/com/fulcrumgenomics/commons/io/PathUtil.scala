@@ -28,23 +28,32 @@ import java.nio.file.{Path, Paths}
 
 /** Provides utility methods for creating and manipulating Path objects and path-like Strings. */
 object PathUtil {
-  val illegalCharacters: String = "[!\"#$%&'()*/:;<=>?@\\^`{|}~] "
+  @deprecated("Use `IllegalCharacters`")
+  def illegalCharacters: String = IllegalCharacters
+
+  val MaxFileNameSize: Int = 254
+  val IllegalCharacters: String = "[!\"#$%&'()*/:;<=>?@\\^`{|}~] "
 
   /** Resolves a path from a String, and then makes the path absolute. Prefer this to PathUtil.pathTo elsewhere. */
   def pathTo(first: String, more: String*): Path = Paths.get(first, more:_*).toAbsolutePath.normalize
 
-  /** Replaces a set of illegal characters within a String that is to be used as a filename.
+  /** Replaces a set of illegal characters within a String that is to be used as a filename. This will also
+    * truncate the file name to be, at maximum, 255 characters.
     *
     * @param fileName the string that is to be used as a filename
-    * @param illegalCharacters the set of characters to be replaced if found, defaults to [[illegalCharacters]]
+    * @param illegalCharacters the set of characters to be replaced if found, defaults to [[IllegalCharacters]]
     * @param replacement an optional replacement character, defaulting to '_'; if None characters are just removed
     * @return the filename without illegal characters
     */
   def sanitizeFileName(fileName: String,
-                       illegalCharacters: String = PathUtil.illegalCharacters,
-                       replacement: Option[Char] = Some('_')): String = replacement match {
-    case None    => fileName.filter(c => !illegalCharacters.contains(c))
-    case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
+                       illegalCharacters: String = PathUtil.IllegalCharacters,
+                       replacement: Option[Char] = Some('_'),
+                       maxFileNameSize: Option[Int] = Some(MaxFileNameSize)): String = {
+    val sanitizedFileName = replacement match {
+      case None    => fileName.filter(c => !illegalCharacters.contains(c))
+      case Some(r) => fileName.map(c => if (illegalCharacters.contains(c)) r else c)
+    }
+    sanitizedFileName.substring(0, Math.min(sanitizedFileName.length, MaxFileNameSize))
   }
 
   /** Replaces the extension on an existing path. */

@@ -59,7 +59,7 @@ class IoTest extends UnitSpec {
     path
   }
 
-  val hasMkfifo: Boolean = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
+  private val hasMkfifo: Boolean = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 
   def pipe(path: Path, lines: Seq[String]): Unit = {
     val pipeProcess = new ProcessBuilder("mkfifo", s"${path.toAbsolutePath}").start()
@@ -261,5 +261,13 @@ class IoTest extends UnitSpec {
     val symFile = Files.createSymbolicLink(link, realFile)
     Io.toInputStream(realFile) shouldBe an[BufferedInputStream]
     Io.toInputStream(symFile) shouldBe an[BufferedInputStream]
+
+  /** Impl of IoUtil to test that compressionLevel can be overridden and set */
+  class FakeIo(var compressionLevel: Int = 5, override val bufferSize: Int = 128*1024) extends IoUtil {}
+  object FakeIo extends FakeIo(compressionLevel=5, bufferSize=128*1024)
+    
+  "IoUtil.compressionLevel" should "be settable" in {
+    FakeIo.compressionLevel = 6
+    FakeIo.compressionLevel shouldBe 6
   }
 }

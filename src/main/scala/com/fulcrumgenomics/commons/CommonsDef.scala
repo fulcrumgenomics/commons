@@ -25,15 +25,13 @@
 package com.fulcrumgenomics.commons
 
 import java.io.Closeable
-
-import com.fulcrumgenomics.commons.collection.BetterBufferedIterator
+import com.fulcrumgenomics.commons.collection.{BetterBufferedIterator, ParIterator}
 import com.fulcrumgenomics.commons.util.Logger
 
 import scala.collection.compat._
 import scala.collection.parallel.immutable
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable, TaskSupport}
 import java.util.concurrent.ForkJoinPool
-
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
@@ -374,6 +372,23 @@ trait CommonsDef extends Compat {
     }
   }
 
+  /** Implicit class that allows generation of ParIterators from Iterators with convenience methods. */
+  implicit class ParIteratorSupport[A](iterator: Iterator[A]) {
+    /**
+      * Creates a [[ParIterator]]; see documentation for that class for detailed usage.
+      *
+      * @param threads the number of threads to use in parallel transform operations on the iterator
+      * @param chunkSize the size of chunks to collect and perform parallel operations on
+      * @param chunkBuffer if > 0 use an [[com.fulcrumgenomics.commons.async.AsyncIterator]] to accumulate/cache
+      *                    `chunkBuffer` incoming chunks ready for parallel processing
+      */
+    def parWith(threads: Int,
+                chunkSize: Int = ParIterator.DefaultChunkSize,
+                chunkBuffer: Int = ParIterator.DefaultChunkBuffer): ParIterator[A] = {
+      ParIterator(this.iterator, threads=threads, chunkSize=chunkSize, chunkBuffer=chunkBuffer)
+    }
+  }
+
   /** Implicit that generates a ParSupport from a Seq. */
   implicit def seqToParSupport[A](seq: Seq[A]): ParSupport[A, _ <: Seq[A], _ <: immutable.ParSeq[A]] = seq match {
     case v: Vector[A] => new ParSupport(v, (x: Vector[A]) => new immutable.ParVector[A](x))
@@ -398,6 +413,9 @@ trait CommonsDef extends Compat {
 
   /** Represents a path to a Reference FASTA file. */
   type PathToFasta = java.nio.file.Path
+ 
+  /** Represents a path to a sequence dictionary (.dict). */
+  type PathToSequenceDictionary = java.nio.file.Path
 
   /** Represents a path to a VCF/BCF/VCF.gz. */
   type PathToVcf = java.nio.file.Path
