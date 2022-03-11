@@ -63,9 +63,15 @@ trait IoUtil {
       case _ => {
         val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
         val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
-        new BufferedInputStream(stream, bufferSize)
-        if (!attrs.isRegularFile && attrs.isOther) stream
-        else new BufferedInputStream(stream, bufferSize)
+
+        if (!attrs.isRegularFile && attrs.isOther) {
+          // Not a regular file, directory or symlink - which likely means a named pipe
+          // and for some reason buffering reading from named pipes goes badly
+          stream
+        }
+        else {
+          new BufferedInputStream(stream, bufferSize)
+        }
       }
     }
   }

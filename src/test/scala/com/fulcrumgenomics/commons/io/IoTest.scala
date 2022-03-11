@@ -61,7 +61,7 @@ class IoTest extends UnitSpec {
 
   private val hasMkfifo: Boolean = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 
-  def pipe(path: Path, lines: Seq[String]): Unit = {
+  def makeNamedPipe(path: Path): Unit = {
     val pipeProcess = new ProcessBuilder("mkfifo", s"${path.toAbsolutePath}").start()
     pipeProcess.waitFor(5, TimeUnit.SECONDS) shouldBe true
     pipeProcess.exitValue() shouldBe 0
@@ -77,12 +77,12 @@ class IoTest extends UnitSpec {
     Io.assertReadable(Io.StdIn)
   }
 
-  it should "not throw an exception for Unix fifos" in { 
+  it should "not throw an exception for Unix fifos" in {
     assume(hasMkfifo, "Canceling Posix specific test.")
     val lines    = Seq("foo", "bar")
     val pipeDir  = tmpdir()
     val pipePath = pipeDir.resolve("pipe1")
-    pipe(pipePath, lines)
+    makeNamedPipe(pipePath)
     Io.assertReadable(pipePath)
     Files.delete(pipePath)
   }
@@ -213,13 +213,13 @@ class IoTest extends UnitSpec {
     an[IllegalArgumentException] should be thrownBy Io.readLinesFromResource("/path/does/not/exist.json")
   }
 
-  "Io.readLines" should "read Unix fifos" in { 
+  "Io.readLines" should "read Unix fifos" in {
     assume(hasMkfifo, "Canceling Posix specific test.")
-    val lines    = Seq("foo", "bar")
+    val lines    = Seq("This is a line of text right here!", "And this is another!!!  Woo.")
     val pipeDir  = tmpdir()
     val pipePath = pipeDir.resolve("pipe2")
     Files.deleteIfExists(pipePath) // in case of a failed previous test that needs clean up
-    pipe(pipePath, lines)
+    makeNamedPipe(pipePath)
     val writeFuture = Future { Io.writeLines(pipePath, lines); true }
     Io.readLines(pipePath).toList should contain theSameElementsInOrderAs lines
     Await.result(writeFuture, Duration(3, TimeUnit.SECONDS)) shouldBe true
