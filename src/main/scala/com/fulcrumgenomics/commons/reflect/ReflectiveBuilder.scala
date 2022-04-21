@@ -166,6 +166,9 @@ class ReflectiveBuilder[T](val clazz: Class[T]) {
   def buildDefault() : T = {
     build(this.argumentLookup.ordered.map(a => a.value getOrElse { throw new IllegalStateException(s"Missing ${a.name}") }))
   }
+
+  /** Resets the argument values to their initial values */
+  def reset(): Unit = this.argumentLookup.reset()
 }
 
 
@@ -195,6 +198,9 @@ class ArgumentLookup[ArgType <: Argument](args: ArgType*) {
 
   /** Returns the ArgumentDefinition, if one exists, for the provided field name. */
   def forField(fieldName: String) : Option[ArgType] = this.byFieldName.get(fieldName)
+
+  /** Resets the argument values to their initial values */
+  def reset() : Unit = this.iterator.foreach(_.reset())
 }
 
 
@@ -231,7 +237,9 @@ class Argument(val declaringClass: Class[_],
     * the argument is an Option then auto-default to None, so that it's not necessary for a class
     * to always have `x: Option[Foo] = None`.
     */
-  private var _value : Option[Any] = if (argumentType == classOf[Option[_]] && defaultValue.isEmpty) Some(None) else defaultValue
+  private var _value : Option[Any] = initialValue()
+
+  private def initialValue() : Option[Any] = if (argumentType == classOf[Option[_]] && defaultValue.isEmpty) Some(None) else defaultValue
 
   /** Retrieves the current set value of the argument. */
   def value: Option[Any] = this._value
@@ -253,4 +261,7 @@ class Argument(val declaringClass: Class[_],
     case Some(c) if isOption     => c.asInstanceOf[Option[_]].nonEmpty
     case _                       => true
   }
+
+  /** Resets the value to the initial value */
+  def reset(): Unit = this._value = initialValue()
 }
