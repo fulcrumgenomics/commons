@@ -110,6 +110,22 @@ class ReflectiveBuilderTest extends UnitSpec {
     an[IllegalStateException] should be thrownBy builder.build()
   }
 
+  it should "be able to be re-used via reset()" in {
+    val builder = new ReflectiveBuilder(classOf[CaseClass])
+
+    // overrides a default
+    builder.argumentLookup.forField("i").get.value = 7
+    builder.argumentLookup.forField("s").get.value = "foo"
+    builder.argumentLookup.forField("l").get.value = 43
+    builder.build() shouldBe CaseClass(i=7, s="foo", l=43)
+
+    // reset and build an new instance, relying on the default value for "l"
+    builder.reset()
+    builder.argumentLookup.forField("i").get.value = 8
+    builder.argumentLookup.forField("s").get.value = "bar"
+    builder.build() shouldBe CaseClass(i=8, s="bar")
+  }
+
   "ReflectiveBuilder.buildDefault" should "throw an IllegalStateException if a constructor argument does not have a default value" in {
     val builder = new ReflectiveBuilder(clazz=classOf[NoDefaults])
     an[IllegalStateException] should be thrownBy builder.buildDefault()
