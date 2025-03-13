@@ -8,7 +8,7 @@ jobs:
     environment: github-actions
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Scala
@@ -20,19 +20,19 @@ jobs:
           set -e
           sbt +clean coverage +test && sbt coverageReport coverageAggregate && (find $HOME/.sbt -name "*.lock" | xargs rm) && (find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm)
       - name: Code Coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v5.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
       - name: Cache .ivy2
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.ivy2
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
       - name: Cache .sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.properties') }}
@@ -46,7 +46,7 @@ jobs:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Scala
