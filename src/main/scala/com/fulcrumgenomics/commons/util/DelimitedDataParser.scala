@@ -79,7 +79,7 @@ class Row private[util] (private val headerIndices: Map[String,Int], private val
       case (None, false)  => throw new NoSuchElementException(column)
     }
 
-  /** Gets the header key (column name) for this row */
+  /** Gets the header keys (column names) for this row */
   def header: Iterable[String] = this.headerIndices.keys
 }
 
