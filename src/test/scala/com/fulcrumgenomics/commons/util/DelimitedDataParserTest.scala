@@ -218,7 +218,7 @@ class DelimitedDataParserTest extends UnitSpec {
     row.get[String]("c", allowMissingColumn=true) shouldBe None
   }
 
-  "DelimitedDataParser.header" should "return the column header" in {
+  "Row.header" should "return the header for all columns" in {
     val parser = csv(Seq("a,b,c", "1,2,"))
     val row = parser.next()
     row.header.toIndexedSeq should contain theSameElementsInOrderAs Seq("a", "b", "c")
