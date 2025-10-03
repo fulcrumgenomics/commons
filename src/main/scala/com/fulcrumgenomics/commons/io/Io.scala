@@ -27,11 +27,11 @@ import java.io._
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
-
 import com.fulcrumgenomics.commons.CommonsDef._
 
 import scala.collection.compat._
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 /**
 * Singleton object to provide access to Io utility methods.
@@ -60,19 +60,19 @@ trait IoUtil {
     PathUtil.extensionOf(path) match {
       case Some(".gz") | Some(".bgz") | Some(".bgzip") =>
         new GZIPInputStream(Files.newInputStream(path), bufferSize)
-      case _ => {
-        val stream =  if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
-        val attrs  = Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes])
+      case _ =>
+        val stream = if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
 
-        if (!attrs.isRegularFile && attrs.isOther) {
-          // Not a regular file, directory or symlink - which likely means a named pipe
-          // and for some reason buffering reading from named pipes goes badly
-          stream
-        }
-        else {
-          new BufferedInputStream(stream, bufferSize)
-        }
-      }
+        // Check if this path is to a special file or not. Although the behavior of toRealPath() is platform-dependent,
+        // exceptions may raise if the path is a file descriptor so we want to return true in those cases. Later we
+        // choose to buffer reading from regular files only since buffered reading from named pipes and file descriptors
+        // can go poorly due to the BufferedInputStream trying to call .available() on the stream which subsequently
+        // calls .seek() which is illegal to do on pipes and file descriptors.
+        val isSpecialFile = Try(Files.readAttributes(path.toRealPath(), classOf[BasicFileAttributes]))
+          .map(attrs => !attrs.isRegularFile && attrs.isOther)
+          .getOrElse(true)
+
+        if (isSpecialFile) stream else new BufferedInputStream(stream, bufferSize)
     }
   }
 
