@@ -31,7 +31,7 @@ import com.fulcrumgenomics.commons.CommonsDef._
 
 import scala.collection.compat._
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
 * Singleton object to provide access to Io utility methods.
