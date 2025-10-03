@@ -99,7 +99,7 @@ lazy val commonSettings = Seq(
   shellPrompt          := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) },
   updateOptions        := updateOptions.value.withCachedResolution(true),
   updateOptions        := updateOptions.value.withGigahorse(false),
-  pomExtra             := <url>https://github.com/fulcrumgenomics/fgbio</url>
+  pomExtra             := <url>https://github.com/fulcrumgenomics/commons</url>
     <licenses>
       <license>
         <name>MIT License</name>
