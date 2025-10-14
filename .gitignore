@@ -2,3 +2,5 @@
 target
 .java-version
 **/*.iml
+.metals/
+.vscode/
