@@ -80,6 +80,7 @@ lazy val commonSettings = Seq(
   organizationName     := "Fulcrum Genomics LLC",
   organizationHomepage := Some(url("http://www.fulcrumgenomics.com")),
   homepage             := Some(url("http://github.com/fulcrumgenomics/commons")),
+  scmInfo              := Some(ScmInfo(url("http://github.com/fulcrumgenomics/commons"), "scm:git@github.com:fulcrumgenomics/commons.git")),
   startYear            := Some(2015),
   scalaVersion         := "2.13.14",
   crossScalaVersions   := Seq("2.13.14"),
@@ -99,8 +100,7 @@ lazy val commonSettings = Seq(
   shellPrompt          := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) },
   updateOptions        := updateOptions.value.withCachedResolution(true),
   updateOptions        := updateOptions.value.withGigahorse(false),
-  pomExtra             := <url>https://github.com/fulcrumgenomics/commons</url>
-    <licenses>
+  pomExtra             := <licenses>
       <license>
         <name>MIT License</name>
         <url>https://www.opensource.org/licenses/mit-license.html</url>
