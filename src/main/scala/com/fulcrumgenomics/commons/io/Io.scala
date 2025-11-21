@@ -114,7 +114,8 @@ trait IoUtil {
     if (path == null)                throw new IllegalArgumentException("Cannot check readability of null path.")
     assert(!Files.notExists(path),   "Cannot read non-existent path: " + path)
     assert(!Files.isDirectory(path), "Cannot read path because it is a directory: " + path)
-    assert(Files.isReadable(path),   "Path exists but is not readable: " + path)
+    val isSpecialFd = Option(path.toString).exists(path => path.startsWith("/dev/fd") || path.startsWith("/proc/self/fd/"))
+    if (!isSpecialFd) { assert(Files.isReadable(path), "Path exists but is not readable: " + path) }
   }
 
   /** Asserts that the Paths represent directories that can be listed. */
