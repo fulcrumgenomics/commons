@@ -12,13 +12,12 @@ on:
       SONATYPE_PASS:
         required: false
 
-concurrency:
-  group: unittest-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    concurrency:
+      group: test-${{ github.workflow }}-${{ github.ref }}-${{ matrix.jvm }}
+      cancel-in-progress: true
     strategy:
       matrix:
         jvm: ["temurin:1.8.0-442", "temurin:1.11.0.27", "temurin:1.17.0.15", "temurin:1.21.0.7", "temurin:1.22.0.2"]
@@ -56,6 +55,9 @@ jobs:
     if: ${{ github.repository == 'fulcrumgenomics/commons' && github.ref == 'refs/heads/main' && github.event_name != 'workflow_call' }}
     needs: test
     runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
     environment: github-actions
     env:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
@@ -106,4 +108,4 @@ jobs:
       - name: Build and sign artifacts
         shell: bash -l {0}
         run: |
-          sbt +publishSigned
+          sbt +publishSigned sonaRelease
