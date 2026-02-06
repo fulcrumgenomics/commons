@@ -61,7 +61,8 @@ trait IoUtil {
       case Some(".gz") | Some(".bgz") | Some(".bgzip") =>
         new GZIPInputStream(Files.newInputStream(path), bufferSize)
       case _ =>
-        val stream = if (Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
+        val isSpecialFd = path.toString.startsWith("/dev/fd") || path.toString.startsWith("/proc/self/fd/")
+        val stream = if (!isSpecialFd && Files.isSameFile(path, Io.StdIn)) System.in else Files.newInputStream(path)
 
         // Check if this path is to a special file or not. Although the behavior of toRealPath() is platform-dependent,
         // exceptions may raise if the path is a file descriptor so we want to return true in those cases. Later we
@@ -114,7 +115,7 @@ trait IoUtil {
     if (path == null)                throw new IllegalArgumentException("Cannot check readability of null path.")
     assert(!Files.notExists(path),   "Cannot read non-existent path: " + path)
     assert(!Files.isDirectory(path), "Cannot read path because it is a directory: " + path)
-    val isSpecialFd = Option(path.toString).exists(path => path.startsWith("/dev/fd") || path.startsWith("/proc/self/fd/"))
+    val isSpecialFd = path.toString.startsWith("/dev/fd") || path.toString.startsWith("/proc/self/fd/")
     if (!isSpecialFd) { assert(Files.isReadable(path), "Path exists but is not readable: " + path) }
   }
 
